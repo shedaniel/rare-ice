@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "me.shedaniel.rareice.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": ["BlockHooks", "MixinTransparentBlock"],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
