@@ -41,8 +41,6 @@ public class RareIce implements ModInitializer {
         Registry.BIOME.forEach(this::handleBiome);
         RegistryEntryAddedCallback.event(Registry.BIOME).register((i, identifier, biome) -> handleBiome(biome));
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
-            if (world.isClient())
-                return ActionResult.SUCCESS;
             BlockPos pos = hitResult.getBlockPos();
             BlockState state = world.getBlockState(pos);
             if ((state.getBlock() == Blocks.ICE || state.getBlock() == RareIce.RARE_ICE_BLOCK)) {
@@ -52,6 +50,8 @@ public class RareIce implements ModInitializer {
                     blockEntity = world.getBlockEntity(pos);
                 }
                 if (blockEntity instanceof RareIceBlockEntity) {
+                    if (world.isClient())
+                        return ActionResult.SUCCESS;
                     if (player == null) {
                         return ActionResult.SUCCESS;
                     } else {
