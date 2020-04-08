@@ -9,11 +9,13 @@ import net.fabricmc.fabric.api.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.registry.RegistryEntryAddedCallback;
 import net.fabricmc.fabric.api.tools.FabricToolTags;
+import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.entity.EntityType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -29,7 +31,7 @@ import net.minecraft.world.gen.feature.Feature;
 
 public class RareIce implements ModInitializer {
     
-    public static final Block RARE_ICE_BLOCK = new RareIceBlock(FabricBlockSettings.copy(Blocks.ICE).breakByTool(FabricToolTags.PICKAXES).build());
+    public static final Block RARE_ICE_BLOCK = new RareIceBlock(FabricBlockSettings.copyOf(AbstractBlock.Settings.copy(Blocks.ICE).allowsSpawning((state, world, pos, type) -> type == EntityType.POLAR_BEAR)).breakByTool(FabricToolTags.PICKAXES).build());
     public static final BlockEntityType<RareIceBlockEntity> RARE_ICE_BLOCK_ENTITY_TYPE = BlockEntityType.Builder.create(RareIceBlockEntity::new, RARE_ICE_BLOCK).build(null);
     public static final Feature<RareIceConfig> RARE_ICE_FEATURE = new RareIceFeature(RareIceConfig::getDefault);
     

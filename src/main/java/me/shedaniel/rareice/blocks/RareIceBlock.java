@@ -7,7 +7,6 @@ import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
@@ -86,13 +85,6 @@ public class RareIceBlock extends BlockWithEntity {
     @Override
     public BlockRenderType getRenderType(BlockState state) {
         return BlockRenderType.MODEL;
-    }
-    
-    @SuppressWarnings("deprecation")
-    @Deprecated
-    @Override
-    public boolean allowsSpawning(BlockState state, BlockView view, BlockPos pos, EntityType<?> type) {
-        return type == EntityType.POLAR_BEAR;
     }
     
     @Override

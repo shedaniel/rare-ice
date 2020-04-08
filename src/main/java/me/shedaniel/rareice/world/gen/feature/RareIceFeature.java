@@ -7,6 +7,7 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IWorld;
+import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.ChunkGeneratorConfig;
 import net.minecraft.world.gen.feature.Feature;
@@ -21,7 +22,7 @@ public class RareIceFeature extends Feature<RareIceConfig> {
     }
     
     @Override
-    public boolean generate(IWorld world, ChunkGenerator<? extends ChunkGeneratorConfig> generator, Random random, BlockPos pos, RareIceConfig config) {
+    public boolean generate(IWorld world, StructureAccessor accessor, ChunkGenerator<? extends ChunkGeneratorConfig> generator, Random random, BlockPos pos, RareIceConfig config) {
         float f = random.nextFloat() * 3.1415927F;
         float g = (float) config.size / 8.0F;
         int i = MathHelper.ceil(((float) config.size / 16.0F * 2.0F + 1.0F) / 2.0F);
@@ -112,7 +113,6 @@ public class RareIceFeature extends Feature<RareIceConfig> {
                                             mutable.set(ag, ai, ak);
                                             if (config.predicate.test(world.getBlockState(mutable))) {
                                                 world.setBlockState(mutable, RareIce.RARE_ICE_BLOCK.getDefaultState(), 2);
-                                                System.out.println(mutable);
                                                 BlockEntity entity = world.getBlockEntity(mutable);
                                                 if (entity instanceof RareIceBlockEntity) {
                                                     ((RareIceBlockEntity) entity).addLootTable(world.getWorld());

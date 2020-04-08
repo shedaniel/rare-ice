@@ -2,8 +2,9 @@ package me.shedaniel.rareice.blocks.entities;
 
 import me.shedaniel.rareice.ItemLocation;
 import me.shedaniel.rareice.RareIce;
-import me.shedaniel.rareice.mixin.BlockHooks;
+import me.shedaniel.rareice.mixin.AbstractBlockHooks;
 import net.fabricmc.fabric.api.block.entity.BlockEntityClientSerializable;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.Material;
 import net.minecraft.block.entity.BlockEntity;
@@ -17,7 +18,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.*;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Clearable;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.Tickable;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 
@@ -54,7 +59,7 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable, BlockE
     }
     
     @Override
-    public void fromTag(CompoundTag tag) {
+    public void fromTag(BlockState state, CompoundTag tag) {
         loadInitialChunkData(tag);
         this.delay = tag.getInt("RevertDelay");
     }
@@ -90,7 +95,7 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable, BlockE
     }
     
     private void loadInitialChunkData(CompoundTag tag) {
-        super.fromTag(tag);
+        super.fromTag(null, tag);
         this.itemsContained.clear();
         this.itemsLocations.clear();
         ListTag itemsTag = tag.getList("Items", 10);
@@ -114,7 +119,7 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable, BlockE
         if (setup) {
             setup = false;
             delay = 0;
-            LootTable lootTable = world.getServer().getLootManager().getSupplier(LOOT_TABLE);
+            LootTable lootTable = world.getServer().getLootManager().getTable(LOOT_TABLE);
             LootContext.Builder builder = new LootContext.Builder((ServerWorld) world);
             List<ItemStack> drops = lootTable.getDrops(builder.build(LootContextTypes.EMPTY));
             int size = MathHelper.clamp(world.random.nextInt(5) - (world.random.nextInt(1) + 2), 0, drops.size());
@@ -138,7 +143,7 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable, BlockE
     
     public ActionResult addItem(World world, ItemStack itemStack, PlayerEntity nullablePlayer) {
         if (itemStack.getItem() instanceof BlockItem) {
-            Material material = ((BlockHooks) ((BlockItem) itemStack.getItem()).getBlock()).getMaterial();
+            Material material = ((AbstractBlockHooks) ((BlockItem) itemStack.getItem()).getBlock()).getMaterial();
             if (material == Material.ICE || material == Material.PACKED_ICE)
                 return ActionResult.PASS;
         }
