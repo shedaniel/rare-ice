@@ -1,0 +1,12 @@
+modLoader="javafml"
+loaderVersion="[31,)"
+issueTrackerURL="https://github.com/shedaniel/rare-ice/issues/"
+logoFile="icon.png"
+authors="shedaniel"
+[[mods]]
+    modId="rare-ice"
+    version="${file.jarVersion}"
+    displayName="Rare Ice"
+    description='''
+Adds rare ice into the world. Can you find them?
+'''

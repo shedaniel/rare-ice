@@ -1,14 +1,14 @@
-package me.shedaniel.rareice.world.gen.feature;
+package me.shedaniel.rareice.forge.world.gen.feature;
 
 import com.mojang.datafixers.Dynamic;
-import me.shedaniel.rareice.RareIce;
-import me.shedaniel.rareice.blocks.entities.RareIceBlockEntity;
-import net.minecraft.block.entity.BlockEntity;
+import me.shedaniel.rareice.forge.RareIce;
+import me.shedaniel.rareice.forge.blocks.entities.RareIceBlockEntity;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IWorld;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.gen.chunk.ChunkGeneratorConfig;
+import net.minecraft.world.gen.ChunkGenerator;
+import net.minecraft.world.gen.GenerationSettings;
 import net.minecraft.world.gen.feature.Feature;
 
 import java.util.BitSet;
@@ -21,7 +21,7 @@ public class RareIceFeature extends Feature<RareIceConfig> {
     }
     
     @Override
-    public boolean generate(IWorld world, ChunkGenerator<? extends ChunkGeneratorConfig> generator, Random random, BlockPos pos, RareIceConfig config) {
+    public boolean place(IWorld world, ChunkGenerator<? extends GenerationSettings> generator, Random random, BlockPos pos, RareIceConfig config) {
         float f = random.nextFloat() * 3.1415927F;
         float g = (float) config.size / 8.0F;
         int i = MathHelper.ceil(((float) config.size / 16.0F * 2.0F + 1.0F) / 2.0F);
@@ -109,10 +109,10 @@ public class RareIceFeature extends Feature<RareIceConfig> {
                                         int am = ag - x + (ai - y) * size + (ak - z) * size * i;
                                         if (!bitSet.get(am)) {
                                             bitSet.set(am);
-                                            mutable.set(ag, ai, ak);
+                                            mutable.setPos(ag, ai, ak);
                                             if (config.predicate.test(world.getBlockState(mutable))) {
                                                 world.setBlockState(mutable, RareIce.RARE_ICE_BLOCK.getDefaultState(), 2);
-                                                BlockEntity entity = world.getBlockEntity(mutable);
+                                                TileEntity entity = world.getTileEntity(mutable);
                                                 if (entity instanceof RareIceBlockEntity) {
                                                     ((RareIceBlockEntity) entity).addLootTable(world.getWorld());
                                                 }

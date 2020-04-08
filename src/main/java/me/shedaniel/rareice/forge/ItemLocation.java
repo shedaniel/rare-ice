@@ -1,6 +1,6 @@
-package me.shedaniel.rareice;
+package me.shedaniel.rareice.forge;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.Vec3d;
 
 public class ItemLocation extends Vec3d {
@@ -19,7 +19,7 @@ public class ItemLocation extends Vec3d {
         this.pitch = pitch;
     }
     
-    public static ItemLocation fromTag(CompoundTag compoundTag) {
+    public static ItemLocation read(CompoundNBT compoundTag) {
         double x = compoundTag.getDouble("x");
         double y = compoundTag.getDouble("y");
         double z = compoundTag.getDouble("z");
@@ -28,7 +28,7 @@ public class ItemLocation extends Vec3d {
         return new ItemLocation(x, y, z, yaw, pitch);
     }
     
-    public void toTag(CompoundTag compoundTag) {
+    public void write(CompoundNBT compoundTag) {
         compoundTag.putDouble("x", x);
         compoundTag.putDouble("y", y);
         compoundTag.putDouble("z", z);
