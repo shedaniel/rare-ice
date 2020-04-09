@@ -1,6 +1,5 @@
 package me.shedaniel.rareice.forge;
 
-import com.google.common.collect.Lists;
 import me.shedaniel.rareice.forge.blocks.RareIceBlock;
 import me.shedaniel.rareice.forge.blocks.entities.RareIceBlockEntity;
 import me.shedaniel.rareice.forge.world.gen.feature.RareIceConfig;
@@ -24,19 +23,16 @@ import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.placement.CountRangeConfig;
 import net.minecraft.world.gen.placement.Placement;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.BiomeManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.ToolType;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-
-import java.util.List;
+import net.minecraftforge.registries.ForgeRegistries;
 
 @Mod.EventBusSubscriber(modid = "rare-ice", bus = Mod.EventBusSubscriber.Bus.MOD)
 @Mod("rare-ice")
@@ -49,7 +45,6 @@ public class RareIce {
     public RareIce() {
         DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> FMLJavaModLoadingContext.get().getModEventBus().register(new RareIceClient()));
         MinecraftForge.EVENT_BUS.addListener(RareIce::rightClickBlock);
-        MinecraftForge.EVENT_BUS.addListener(RareIce::commonSetup);
     }
     
     @SubscribeEvent
@@ -86,25 +81,20 @@ public class RareIce {
                 blockEntity = world.getTileEntity(pos);
             }
             if (blockEntity instanceof RareIceBlockEntity) {
-                if (event.getSide().isClient() || player == null) {
+                RareIceBlockEntity rareIceBlockEntity = (RareIceBlockEntity) blockEntity;
+                ItemStack itemStack = player.getHeldItem(event.getHand());
+                itemStack = player.abilities.isCreativeMode ? itemStack.copy() : itemStack;
+                ActionResultType type = rareIceBlockEntity.addItem(world, itemStack, player, event.getSide().isServer());
+                if (type != ActionResultType.PASS)
                     event.setCanceled(true);
-                    event.setCancellationResult(ActionResultType.SUCCESS);
-                } else {
-                    RareIceBlockEntity rareIceBlockEntity = (RareIceBlockEntity) blockEntity;
-                    ItemStack itemStack = player.getHeldItem(event.getHand());
-                    itemStack = player.abilities.isCreativeMode ? itemStack.copy() : itemStack;
-                    event.setCanceled(true);
-                    event.setCancellationResult(rareIceBlockEntity.addItem(world, itemStack, player));
-                }
+                event.setCancellationResult(type);
             }
         }
     }
     
-    private static void commonSetup(FMLCommonSetupEvent event) {
-        List<BiomeManager.BiomeEntry> biomes = Lists.newArrayList();
-        biomes.addAll(BiomeManager.getBiomes(BiomeManager.BiomeType.COOL));
-        biomes.addAll(BiomeManager.getBiomes(BiomeManager.BiomeType.ICY));
-        biomes.stream().map(entry -> entry.biome).forEach(RareIce::handleBiome);
+    @SubscribeEvent
+    public static void commonSetup(FMLCommonSetupEvent event) {
+        ForgeRegistries.BIOMES.getValues().stream().filter(biome -> biome.getDefaultTemperature() < 0.15F).forEach(RareIce::handleBiome);
     }
     
     private static void handleBiome(Biome biome) {

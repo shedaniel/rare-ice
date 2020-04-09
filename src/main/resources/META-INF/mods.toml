@@ -5,7 +5,7 @@ logoFile="icon.png"
 authors="shedaniel"
 [[mods]]
     modId="rare-ice"
-    version="${file.jarVersion}"
+    version="${version}"
     displayName="Rare Ice"
     description='''
 Adds rare ice into the world. Can you find them?

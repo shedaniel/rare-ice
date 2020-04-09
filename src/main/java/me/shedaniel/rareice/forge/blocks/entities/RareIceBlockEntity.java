@@ -142,19 +142,25 @@ public class RareIceBlockEntity extends TileEntity implements IClearable, ITicka
     }
     
     public ActionResultType addItem(World world, ItemStack itemStack, PlayerEntity nullablePlayer) {
+        return addItem(world, itemStack, nullablePlayer, true);
+    }
+    
+    public ActionResultType addItem(World world, ItemStack itemStack, PlayerEntity nullablePlayer, boolean actuallyAdd) {
         if (itemStack.getItem() instanceof BlockItem) {
             Material material = ((BlockItem) itemStack.getItem()).getBlock().getDefaultState().getMaterial();
             if (material == Material.ICE || material == Material.PACKED_ICE)
                 return ActionResultType.PASS;
         }
         if (getItemsContained().size() < 8 && itemStack.getCount() >= 1) {
-            getItemsContained().add(itemStack.split(1));
-            Random random = world.rand;
-            if (random == null) random = RANDOM;
-            getItemsLocations().add(new ItemLocation(random.nextDouble() * .95 + .1, random.nextDouble() * .7 + .1, random.nextDouble() * .95 + .1));
-            if (nullablePlayer != null)
+            if (actuallyAdd) {
+                getItemsContained().add(itemStack.split(1));
+                Random random = world.rand;
+                if (random == null) random = RANDOM;
+                getItemsLocations().add(new ItemLocation(random.nextDouble() * .95 + .1, random.nextDouble() * .7 + .1, random.nextDouble() * .95 + .1));
+                updateListeners();
+            }
+            if (nullablePlayer != null && world.isRemote)
                 nullablePlayer.playSound(SoundEvents.BLOCK_CORAL_BLOCK_BREAK, 1.0F, 1.0F);
-            updateListeners();
             return ActionResultType.SUCCESS;
         }
         return ActionResultType.CONSUME;
@@ -168,11 +174,21 @@ public class RareIceBlockEntity extends TileEntity implements IClearable, ITicka
     @Nullable
     @Override
     public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(getPos(), -1, saveInitialChunkData(new CompoundNBT()));
+        return new SUpdateTileEntityPacket(getPos(), 1, getUpdateTag());
+    }
+    
+    @Override
+    public CompoundNBT getUpdateTag() {
+        return saveInitialChunkData(new CompoundNBT());
+    }
+    
+    @Override
+    public void handleUpdateTag(CompoundNBT tag) {
+        loadInitialChunkData(tag);
     }
     
     @Override
     public void onDataPacket(NetworkManager manager, SUpdateTileEntityPacket packet) {
-        loadInitialChunkData(packet.getNbtCompound());
+        handleUpdateTag(packet.getNbtCompound());
     }
 }
