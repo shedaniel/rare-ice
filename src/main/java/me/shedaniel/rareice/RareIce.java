@@ -43,6 +43,8 @@ public class RareIce implements ModInitializer {
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
             BlockPos pos = hitResult.getBlockPos();
             BlockState state = world.getBlockState(pos);
+            if (player == null || player.isSneaking())
+                return ActionResult.PASS;
             if ((state.getBlock() == Blocks.ICE || state.getBlock() == RareIce.RARE_ICE_BLOCK)) {
                 BlockEntity blockEntity = world.getBlockEntity(pos);
                 if (blockEntity == null) {
@@ -50,16 +52,10 @@ public class RareIce implements ModInitializer {
                     blockEntity = world.getBlockEntity(pos);
                 }
                 if (blockEntity instanceof RareIceBlockEntity) {
-                    if (world.isClient())
-                        return ActionResult.SUCCESS;
-                    if (player == null) {
-                        return ActionResult.SUCCESS;
-                    } else {
                         RareIceBlockEntity rareIceBlockEntity = (RareIceBlockEntity) blockEntity;
                         ItemStack itemStack = player.getStackInHand(hand);
                         itemStack = player.abilities.creativeMode ? itemStack.copy() : itemStack;
-                        return rareIceBlockEntity.addItem(world, itemStack, player);
-                    }
+                        return rareIceBlockEntity.addItem(world, itemStack, player, !world.isClient());
                 }
             }
             return ActionResult.PASS;

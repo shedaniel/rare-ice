@@ -137,19 +137,25 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable, BlockE
     }
     
     public ActionResult addItem(World world, ItemStack itemStack, PlayerEntity nullablePlayer) {
+        return addItem(world, itemStack, nullablePlayer, true);
+    }
+    
+    public ActionResult addItem(World world, ItemStack itemStack, PlayerEntity nullablePlayer, boolean actuallyDoIt) {
         if (itemStack.getItem() instanceof BlockItem) {
             Material material = ((BlockHooks) ((BlockItem) itemStack.getItem()).getBlock()).getMaterial();
             if (material == Material.ICE || material == Material.PACKED_ICE)
                 return ActionResult.PASS;
         }
         if (getItemsContained().size() < 8 && itemStack.getCount() >= 1) {
-            getItemsContained().add(itemStack.split(1));
-            Random random = world.random;
-            if (random == null) random = RANDOM;
-            getItemsLocations().add(new ItemLocation(random.nextDouble() * .95 + .1, random.nextDouble() * .7 + .1, random.nextDouble() * .95 + .1));
+            if (actuallyDoIt) {
+                getItemsContained().add(itemStack.split(1));
+                Random random = world.random;
+                if (random == null) random = RANDOM;
+                getItemsLocations().add(new ItemLocation(random.nextDouble() * .95 + .1, random.nextDouble() * .7 + .1, random.nextDouble() * .95 + .1));
+                updateListeners();
+            }
             if (nullablePlayer != null)
                 nullablePlayer.playSound(SoundEvents.BLOCK_CORAL_BLOCK_BREAK, 1.0F, 1.0F);
-            updateListeners();
             return ActionResult.SUCCESS;
         }
         return ActionResult.CONSUME;
