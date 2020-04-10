@@ -35,7 +35,7 @@ public class RareIce implements ModInitializer {
     
     @Override
     public void onInitialize() {
-        Registry.register(Registry.BLOCK_ENTITY_TYPE, new Identifier("rare-ice", "rare_ice"), RARE_ICE_BLOCK_ENTITY_TYPE);
+        Registry.register(Registry.BLOCK_ENTITY, new Identifier("rare-ice", "rare_ice"), RARE_ICE_BLOCK_ENTITY_TYPE);
         Registry.register(Registry.BLOCK, new Identifier("rare-ice", "rare_ice"), RARE_ICE_BLOCK);
         Registry.register(Registry.ITEM, new Identifier("rare-ice", "rare_ice"), new BlockItem(RARE_ICE_BLOCK, new Item.Settings()));
         Registry.BIOME.forEach(this::handleBiome);
@@ -43,6 +43,8 @@ public class RareIce implements ModInitializer {
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
             BlockPos pos = hitResult.getBlockPos();
             BlockState state = world.getBlockState(pos);
+            if (player == null || player.isSneaking())
+                return ActionResult.PASS;
             if ((state.getBlock() == Blocks.ICE || state.getBlock() == RareIce.RARE_ICE_BLOCK)) {
                 BlockEntity blockEntity = world.getBlockEntity(pos);
                 if (blockEntity == null) {
@@ -50,16 +52,10 @@ public class RareIce implements ModInitializer {
                     blockEntity = world.getBlockEntity(pos);
                 }
                 if (blockEntity instanceof RareIceBlockEntity) {
-                    if (world.isClient())
-                        return ActionResult.SUCCESS;
-                    if (player == null) {
-                        return ActionResult.SUCCESS;
-                    } else {
-                        RareIceBlockEntity rareIceBlockEntity = (RareIceBlockEntity) blockEntity;
-                        ItemStack itemStack = player.getStackInHand(hand);
-                        itemStack = player.abilities.creativeMode ? itemStack.copy() : itemStack;
-                        return rareIceBlockEntity.addItem(world, itemStack, player);
-                    }
+                    RareIceBlockEntity rareIceBlockEntity = (RareIceBlockEntity) blockEntity;
+                    ItemStack itemStack = player.getStackInHand(hand);
+                    itemStack = player.abilities.creativeMode ? itemStack.copy() : itemStack;
+                    return rareIceBlockEntity.addItem(world, itemStack, player, !world.isClient());
                 }
             }
             return ActionResult.PASS;
@@ -70,9 +66,9 @@ public class RareIce implements ModInitializer {
         if (biome.getTemperature() < 0.15f) {
             biome.addFeature(
                     GenerationStep.Feature.TOP_LAYER_MODIFICATION,
-                    RARE_ICE_FEATURE.configure(RareIceConfig.DEFAULT).createDecoratedFeature(
-                            Decorator.RANDOM_COUNT_RANGE.configure(new RangeDecoratorConfig(16, 32, 128, 256))
-                    ));
+                    Biome.configureFeature(RARE_ICE_FEATURE, RareIceConfig.DEFAULT,
+                            Decorator.RANDOM_COUNT_RANGE, new RangeDecoratorConfig(16, 32, 128, 256))
+            );
         }
     }
 }

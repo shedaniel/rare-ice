@@ -5,12 +5,12 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -68,7 +68,7 @@ public class RareIceBlock extends BlockWithEntity {
     @SuppressWarnings("deprecation")
     @Deprecated
     @Override
-    public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+    public void onScheduledTick(BlockState state, World world, BlockPos pos, Random random) {
         if (world.getLightLevel(LightType.BLOCK, pos) > 11 - state.getOpacity(world, pos)) {
             this.melt(state, world, pos);
         }
@@ -86,6 +86,11 @@ public class RareIceBlock extends BlockWithEntity {
     @Override
     public BlockRenderType getRenderType(BlockState state) {
         return BlockRenderType.MODEL;
+    }
+    
+    @Override
+    public RenderLayer getRenderLayer() {
+        return RenderLayer.TRANSLUCENT;
     }
     
     @SuppressWarnings("deprecation")
