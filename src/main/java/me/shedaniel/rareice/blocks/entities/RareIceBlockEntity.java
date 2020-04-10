@@ -154,7 +154,7 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable, BlockE
                 getItemsLocations().add(new ItemLocation(random.nextDouble() * .95 + .1, random.nextDouble() * .7 + .1, random.nextDouble() * .95 + .1));
                 updateListeners();
             }
-            if (nullablePlayer != null)
+            if (nullablePlayer != null && world.isClient())
                 nullablePlayer.playSound(SoundEvents.BLOCK_CORAL_BLOCK_BREAK, 1.0F, 1.0F);
             return ActionResult.SUCCESS;
         }
