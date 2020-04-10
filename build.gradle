@@ -19,7 +19,7 @@ version = project.mod_version
 group = project.maven_group
 
 minecraft {
-    mappings channel: 'snapshot', version: '20200408-1.15.1'
+    mappings channel: 'stable', version: '58-1.14.4'
     runs {
         client {
             workingDirectory project.file('run')

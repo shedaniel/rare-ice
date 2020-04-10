@@ -43,7 +43,7 @@ public class RareIceFeature extends Feature<RareIceConfig> {
     protected boolean generateVeinPart(IWorld world, Random random, RareIceConfig config, double startX, double endX, double startZ, double endZ, double startY, double endY, int x, int y, int z, int size, int i) {
         int j = 0;
         BitSet bitSet = new BitSet(size * i * size);
-        BlockPos.Mutable mutable = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         double[] ds = new double[config.size * 4];
         
         int m;

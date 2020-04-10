@@ -12,13 +12,13 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -79,7 +79,7 @@ public class RareIceBlock extends Block {
     @SuppressWarnings("deprecation")
     @Deprecated
     @Override
-    public void tick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+    public void tick(BlockState state, World world, BlockPos pos, Random random) {
         if (world.getLightFor(LightType.BLOCK, pos) > 11 - state.getOpacity(world, pos)) {
             this.melt(state, world, pos);
         }
@@ -92,6 +92,11 @@ public class RareIceBlock extends Block {
             world.setBlockState(pos, Blocks.WATER.getDefaultState());
             world.neighborChanged(pos, Blocks.WATER, pos);
         }
+    }
+    
+    @Override
+    public BlockRenderLayer getRenderLayer() {
+        return BlockRenderLayer.TRANSLUCENT;
     }
     
     @SuppressWarnings("deprecation")

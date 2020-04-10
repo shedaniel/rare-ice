@@ -163,7 +163,7 @@ public class RareIceBlockEntity extends TileEntity implements IClearable, ITicka
                 nullablePlayer.playSound(SoundEvents.BLOCK_CORAL_BLOCK_BREAK, 1.0F, 1.0F);
             return ActionResultType.SUCCESS;
         }
-        return ActionResultType.CONSUME;
+        return ActionResultType.PASS;
     }
     
     private void updateListeners() {

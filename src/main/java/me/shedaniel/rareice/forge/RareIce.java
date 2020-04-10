@@ -70,7 +70,7 @@ public class RareIce {
     
     private static void rightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         PlayerEntity player = event.getPlayer();
-        if (player.isShiftKeyDown()) return;
+        if (player.isSneaking()) return;
         BlockPos pos = event.getPos();
         World world = event.getWorld();
         BlockState state = world.getBlockState(pos);
@@ -100,8 +100,8 @@ public class RareIce {
     private static void handleBiome(Biome biome) {
         biome.addFeature(
                 GenerationStage.Decoration.TOP_LAYER_MODIFICATION,
-                RARE_ICE_FEATURE.withConfiguration(RareIceConfig.DEFAULT).withPlacement(
-                        Placement.RANDOM_COUNT_RANGE.configure(new CountRangeConfig(16, 32, 128, 256))
-                ));
+                Biome.createDecoratedFeature(RARE_ICE_FEATURE, RareIceConfig.DEFAULT,
+                        Placement.RANDOM_COUNT_RANGE, new CountRangeConfig(16, 32, 128, 256))
+        );
     }
 }
