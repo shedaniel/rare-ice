@@ -2,9 +2,8 @@
   "required": true,
   "package": "me.shedaniel.rareice.mixin",
   "compatibilityLevel": "JAVA_8",
-  "mixins": ["BlockHooks", "MixinTransparentBlock"],
-  "client": [
-  ],
+  "mixins": ["BlockHooks"],
+  "client": ["MixinTransparentBlock"],
   "injectors": {
     "defaultRequire": 1
   }
