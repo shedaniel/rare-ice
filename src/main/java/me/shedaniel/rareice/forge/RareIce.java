@@ -55,13 +55,6 @@ public class RareIce {
     }
     
     @SubscribeEvent
-    public static void registerItems(RegistryEvent.Register<Item> event) {
-        event.getRegistry().registerAll(
-                new BlockItem(RARE_ICE_BLOCK, new Item.Properties()).setRegistryName(new ResourceLocation("rare-ice", "rare_ice"))
-        );
-    }
-    
-    @SubscribeEvent
     public static void registerTileEntityTypes(RegistryEvent.Register<TileEntityType<?>> event) {
         event.getRegistry().register(
                 RARE_ICE_BLOCK_ENTITY_TYPE.setRegistryName(new ResourceLocation("rare-ice", "rare_ice"))
