@@ -14,8 +14,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
@@ -37,7 +35,6 @@ public class RareIce implements ModInitializer {
     public void onInitialize() {
         Registry.register(Registry.BLOCK_ENTITY_TYPE, new Identifier("rare-ice", "rare_ice"), RARE_ICE_BLOCK_ENTITY_TYPE);
         Registry.register(Registry.BLOCK, new Identifier("rare-ice", "rare_ice"), RARE_ICE_BLOCK);
-        Registry.register(Registry.ITEM, new Identifier("rare-ice", "rare_ice"), new BlockItem(RARE_ICE_BLOCK, new Item.Settings()));
         Registry.BIOME.forEach(this::handleBiome);
         RegistryEntryAddedCallback.event(Registry.BIOME).register((i, identifier, biome) -> handleBiome(biome));
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
