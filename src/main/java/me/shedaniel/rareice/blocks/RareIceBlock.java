@@ -32,13 +32,13 @@ public class RareIceBlock extends BlockWithEntity {
     @SuppressWarnings("deprecation")
     @Deprecated
     @Override
-    public void onBlockRemoved(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+    public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
         if (state.getBlock() != newState.getBlock()) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof RareIceBlockEntity) {
                 ItemScatterer.spawn(world, pos, ((RareIceBlockEntity) blockEntity).getItemsContained());
             }
-            super.onBlockRemoved(state, world, pos, newState, moved);
+            super.onStateReplaced(state, world, pos, newState, moved);
         }
     }
     
@@ -53,7 +53,7 @@ public class RareIceBlock extends BlockWithEntity {
     public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, BlockEntity blockEntity, ItemStack stack) {
         super.afterBreak(world, player, pos, state, blockEntity, stack);
         if (EnchantmentHelper.getLevel(Enchantments.SILK_TOUCH, stack) == 0) {
-            if (world.method_27983().method_27999()) {
+            if (world.getDimension().isUltrawarm()) {
                 world.removeBlock(pos, false);
             } else {
                 Material material = world.getBlockState(pos.down()).getMaterial();
@@ -74,7 +74,7 @@ public class RareIceBlock extends BlockWithEntity {
     }
     
     protected void melt(BlockState state, World world, BlockPos pos) {
-        if (world.method_27983().method_27999()) {
+        if (world.getDimension().isUltrawarm()) {
             world.removeBlock(pos, false);
         } else {
             world.setBlockState(pos, Blocks.WATER.getDefaultState());
