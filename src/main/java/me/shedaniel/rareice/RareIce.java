@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.registry.RegistryEntryAddedCallback;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.tool.attribute.v1.FabricToolTags;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -26,19 +27,55 @@ import net.minecraft.world.gen.decorator.Decorator;
 import net.minecraft.world.gen.decorator.RangeDecoratorConfig;
 import net.minecraft.world.gen.feature.Feature;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Properties;
+
 public class RareIce implements ModInitializer {
     
     public static final Block RARE_ICE_BLOCK = new RareIceBlock(FabricBlockSettings.copyOf(Blocks.ICE).allowsSpawning((state, world, pos, type) -> type == EntityType.POLAR_BEAR).breakByTool(FabricToolTags.PICKAXES));
     public static final BlockEntityType<RareIceBlockEntity> RARE_ICE_BLOCK_ENTITY_TYPE = BlockEntityType.Builder.create(RareIceBlockEntity::new, RARE_ICE_BLOCK).build(null);
     public static final Feature<RareIceConfig> RARE_ICE_FEATURE = new RareIceFeature(RareIceConfig.CODEC);
     
+    public static boolean allowInsertingItemsToIce = true;
+    
+    private static void loadConfig(Path file) {
+        allowInsertingItemsToIce = true;
+        
+        if (Files.exists(file)) {
+            try {
+                Properties properties = new Properties();
+                properties.load(Files.newBufferedReader(file));
+                allowInsertingItemsToIce = properties.getOrDefault("allowInsertingItemsToIce", "true").equals("true");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        
+        saveConfig(file);
+    }
+    
+    private static void saveConfig(Path file) {
+        try {
+            Files.createDirectories(file.getParent());
+            Properties properties = new Properties();
+            properties.setProperty("allowInsertingItemsToIce", String.valueOf(allowInsertingItemsToIce));
+            properties.store(Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE), "Rare Ice Configuration");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
     @Override
     public void onInitialize() {
+        loadConfig(FabricLoader.getInstance().getConfigDirectory().toPath().resolve("rare-ice.properties"));
         Registry.register(Registry.BLOCK_ENTITY_TYPE, new Identifier("rare-ice", "rare_ice"), RARE_ICE_BLOCK_ENTITY_TYPE);
         Registry.register(Registry.BLOCK, new Identifier("rare-ice", "rare_ice"), RARE_ICE_BLOCK);
         Registry.BIOME.forEach(this::handleBiome);
         RegistryEntryAddedCallback.event(Registry.BIOME).register((i, identifier, biome) -> handleBiome(biome));
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
+            if (!allowInsertingItemsToIce) return ActionResult.PASS;
             BlockPos pos = hitResult.getBlockPos();
             BlockState state = world.getBlockState(pos);
             if (player == null || player.isSneaking())
