@@ -1,0 +1,25 @@
+plugins {
+    id("fabric-loom") version "0.4.29"
+}
+
+minecraft {
+}
+
+repositories {
+    maven { url "https://dl.bintray.com/shedaniel/legacy-yarn-updated" }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.fabric_minecraft_version}"
+    mappings "me.shedaniel:legacy-yarn:${rootProject.yarn_build}:v2"
+    modCompile "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+
+    modCompile "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+}
+
+processResources {
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+    inputs.property "version", project.version
+}
