@@ -69,7 +69,7 @@ task buildMerged {
         def mergeFolder = new File(folder, ".tempMerge")
         def policyMap = new HashMap<String, String>()
         file("merging.policy").eachLine {
-            if (it.isBlank() || it.startsWith("#")) return
+            if (it.replace(" ", "").isEmpty() || it.startsWith("#")) return
             def env = it.substring(0, it.indexOf(' '))
             if (env == "FABRIC")
                 policyMap.put(it.substring(env.length() + 1), "Fabric")
