@@ -39,15 +39,18 @@ public class RareIce implements ModInitializer {
     public static final Feature<RareIceConfig> RARE_ICE_FEATURE = new RareIceFeature(RareIceConfig.CODEC);
     
     public static boolean allowInsertingItemsToIce = true;
+    public static int probabilityOfRareIce = 6;
     
     private static void loadConfig(Path file) {
         allowInsertingItemsToIce = true;
+        probabilityOfRareIce = 6;
         
         if (Files.exists(file)) {
             try {
                 Properties properties = new Properties();
                 properties.load(Files.newBufferedReader(file));
-                allowInsertingItemsToIce = properties.getOrDefault("allowInsertingItemsToIce", "true").equals("true");
+                allowInsertingItemsToIce = properties.getProperty("allowInsertingItemsToIce", "true").equals("true");
+                probabilityOfRareIce = Integer.parseInt(properties.getProperty("probabilityOfRareIce", "6"));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -61,6 +64,7 @@ public class RareIce implements ModInitializer {
             Files.createDirectories(file.getParent());
             Properties properties = new Properties();
             properties.setProperty("allowInsertingItemsToIce", String.valueOf(allowInsertingItemsToIce));
+            properties.setProperty("probabilityOfRareIce", String.valueOf(probabilityOfRareIce));
             properties.store(Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE), "Rare Ice Configuration");
         } catch (Exception e) {
             e.printStackTrace();
@@ -102,7 +106,7 @@ public class RareIce implements ModInitializer {
             biome.addFeature(
                     GenerationStep.Feature.TOP_LAYER_MODIFICATION,
                     RARE_ICE_FEATURE.configure(RareIceConfig.DEFAULT).createDecoratedFeature(
-                            Decorator.RANDOM_COUNT_RANGE.configure(new RangeDecoratorConfig(16, 32, 128, 256))
+                            Decorator.RANDOM_COUNT_RANGE.configure(new RangeDecoratorConfig(probabilityOfRareIce, 32, 128, 256))
                     ));
         }
     }
