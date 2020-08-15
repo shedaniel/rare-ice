@@ -6,9 +6,7 @@ import me.shedaniel.rareice.blocks.entities.RareIceBlockEntity;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.ServerWorldAccess;
-import net.minecraft.world.gen.StructureAccessor;
+import net.minecraft.world.StructureWorldAccess;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.Feature;
 
@@ -21,7 +19,7 @@ public class RareIceFeature extends Feature<RareIceConfig> {
     }
     
     @Override
-    public boolean generate(ServerWorldAccess world, StructureAccessor accessor, ChunkGenerator generator, Random random, BlockPos pos, RareIceConfig config) {
+    public boolean generate(StructureWorldAccess world, ChunkGenerator generator, Random random, BlockPos pos, RareIceConfig config) {
         float f = random.nextFloat() * 3.1415927F;
         float g = (float) config.size / 8.0F;
         int i = MathHelper.ceil(((float) config.size / 16.0F * 2.0F + 1.0F) / 2.0F);
@@ -40,7 +38,7 @@ public class RareIceFeature extends Feature<RareIceConfig> {
         return this.generateVeinPart(world, random, config, d, e, h, j, l, m, n, o, p, q, r);
     }
     
-    protected boolean generateVeinPart(IWorld world, Random random, RareIceConfig config, double startX, double endX, double startZ, double endZ, double startY, double endY, int x, int y, int z, int size, int i) {
+    protected boolean generateVeinPart(StructureWorldAccess world, Random random, RareIceConfig config, double startX, double endX, double startZ, double endZ, double startY, double endY, int x, int y, int z, int size, int i) {
         int j = 0;
         BitSet bitSet = new BitSet(size * i * size);
         BlockPos.Mutable mutable = new BlockPos.Mutable();
@@ -114,7 +112,7 @@ public class RareIceFeature extends Feature<RareIceConfig> {
                                                 world.setBlockState(mutable, RareIce.RARE_ICE_BLOCK.getDefaultState(), 2);
                                                 BlockEntity entity = world.getBlockEntity(mutable);
                                                 if (entity instanceof RareIceBlockEntity) {
-                                                    ((RareIceBlockEntity) entity).addLootTable(world.getWorld());
+                                                    ((RareIceBlockEntity) entity).addLootTable(world.toServerWorld());
                                                 }
                                                 ++j;
                                             }

@@ -7,10 +7,8 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ISeedReader;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.gen.ChunkGenerator;
 import net.minecraft.world.gen.feature.Feature;
-import net.minecraft.world.gen.feature.structure.StructureManager;
 
 import java.util.BitSet;
 import java.util.Random;
@@ -21,7 +19,7 @@ public class RareIceFeature extends Feature<RareIceConfig> {
     }
     
     @Override
-    public boolean generate(ISeedReader world, StructureManager accessor, ChunkGenerator generator, Random random, BlockPos pos, RareIceConfig config) {
+    public boolean func_241855_a(ISeedReader world, ChunkGenerator generator, Random random, BlockPos pos, RareIceConfig config) {
         float f = random.nextFloat() * 3.1415927F;
         float g = (float) config.size / 8.0F;
         int i = MathHelper.ceil(((float) config.size / 16.0F * 2.0F + 1.0F) / 2.0F);
@@ -40,7 +38,7 @@ public class RareIceFeature extends Feature<RareIceConfig> {
         return this.generateVeinPart(world, random, config, d, e, h, j, l, m, n, o, p, q, r);
     }
     
-    protected boolean generateVeinPart(IWorld world, Random random, RareIceConfig config, double startX, double endX, double startZ, double endZ, double startY, double endY, int x, int y, int z, int size, int i) {
+    protected boolean generateVeinPart(ISeedReader world, Random random, RareIceConfig config, double startX, double endX, double startZ, double endZ, double startY, double endY, int x, int y, int z, int size, int i) {
         int j = 0;
         BitSet bitSet = new BitSet(size * i * size);
         BlockPos.Mutable mutable = new BlockPos.Mutable();

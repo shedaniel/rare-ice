@@ -3,6 +3,7 @@ loaderVersion="[31,)"
 issueTrackerURL="https://github.com/shedaniel/rare-ice/issues/"
 logoFile="icon.png"
 authors="shedaniel"
+license="Creative Commons Attribution-NonCommercial 4.0 International Public License"
 [[mods]]
     modId="rare-ice"
     version="${version}"

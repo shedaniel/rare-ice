@@ -1,12 +1,14 @@
 package me.shedaniel.rareice;
 
+import me.shedaniel.cloth.api.dynamic.registry.v1.BiomesRegistry;
+import me.shedaniel.cloth.api.dynamic.registry.v1.DynamicRegistryCallback;
+import me.shedaniel.cloth.api.dynamic.registry.v1.EarlyInitializer;
 import me.shedaniel.rareice.blocks.RareIceBlock;
 import me.shedaniel.rareice.blocks.entities.RareIceBlockEntity;
 import me.shedaniel.rareice.world.gen.feature.RareIceConfig;
 import me.shedaniel.rareice.world.gen.feature.RareIceFeature;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.fabricmc.fabric.api.event.registry.RegistryEntryAddedCallback;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.tool.attribute.v1.FabricToolTags;
 import net.fabricmc.loader.api.FabricLoader;
@@ -21,7 +23,6 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.GenerationStep;
 import net.minecraft.world.gen.decorator.Decorator;
 import net.minecraft.world.gen.decorator.RangeDecoratorConfig;
@@ -32,7 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Properties;
 
-public class RareIce implements ModInitializer {
+public class RareIce implements ModInitializer, EarlyInitializer {
     
     public static final Block RARE_ICE_BLOCK = new RareIceBlock(FabricBlockSettings.copyOf(Blocks.ICE).allowsSpawning((state, world, pos, type) -> type == EntityType.POLAR_BEAR).breakByTool(FabricToolTags.PICKAXES));
     public static final BlockEntityType<RareIceBlockEntity> RARE_ICE_BLOCK_ENTITY_TYPE = BlockEntityType.Builder.create(RareIceBlockEntity::new, RARE_ICE_BLOCK).build(null);
@@ -73,11 +74,9 @@ public class RareIce implements ModInitializer {
     
     @Override
     public void onInitialize() {
-        loadConfig(FabricLoader.getInstance().getConfigDirectory().toPath().resolve("rare-ice.properties"));
+        loadConfig(FabricLoader.getInstance().getConfigDir().resolve("rare-ice.properties"));
         Registry.register(Registry.BLOCK_ENTITY_TYPE, new Identifier("rare-ice", "rare_ice"), RARE_ICE_BLOCK_ENTITY_TYPE);
         Registry.register(Registry.BLOCK, new Identifier("rare-ice", "rare_ice"), RARE_ICE_BLOCK);
-        Registry.BIOME.forEach(this::handleBiome);
-        RegistryEntryAddedCallback.event(Registry.BIOME).register((i, identifier, biome) -> handleBiome(biome));
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
             if (!allowInsertingItemsToIce) return ActionResult.PASS;
             BlockPos pos = hitResult.getBlockPos();
@@ -101,13 +100,14 @@ public class RareIce implements ModInitializer {
         });
     }
     
-    private void handleBiome(Biome biome) {
-        if (biome.getTemperature() < 0.15f) {
-            biome.addFeature(
-                    GenerationStep.Feature.TOP_LAYER_MODIFICATION,
-                    RARE_ICE_FEATURE.configure(RareIceConfig.DEFAULT).createDecoratedFeature(
-                            Decorator.RANDOM_COUNT_RANGE.configure(new RangeDecoratorConfig(probabilityOfRareIce, 32, 128, 256))
-                    ));
-        }
+    @Override
+    public void onEarlyInitialization() {
+        Registry.register(Registry.FEATURE, new Identifier("rare-ice", "rare_ice"), RARE_ICE_FEATURE);
+        DynamicRegistryCallback.callback(Registry.BIOME_KEY).register((manager, registryKey, biome) -> {
+            if (biome.getTemperature() < 0.15f) {
+                BiomesRegistry.registerFeature(manager, biome, GenerationStep.Feature.UNDERGROUND_ORES,
+                        () -> RARE_ICE_FEATURE.configure(RareIceConfig.DEFAULT).decorate(Decorator.RANGE.configure(new RangeDecoratorConfig(32, 128, 256))).spreadHorizontally().repeat(probabilityOfRareIce));
+            }
+        });
     }
 }

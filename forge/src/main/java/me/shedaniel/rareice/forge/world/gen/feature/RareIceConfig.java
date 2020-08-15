@@ -13,9 +13,7 @@ public class RareIceConfig implements IFeatureConfig {
     public static final RareIceConfig DEFAULT = new RareIceConfig(20);
     public static final Codec<RareIceConfig> CODEC = RecordCodecBuilder.create(instance -> {
         return instance.group(
-                Codec.INT.fieldOf("size").withDefault(20).forGetter((oreFeatureConfig) -> {
-                    return oreFeatureConfig.size;
-                })
+                Codec.INT.fieldOf("size").orElse(20).forGetter(RareIceConfig::getSize)
         ).apply(instance, RareIceConfig::new);
     });
     public final int size;
@@ -23,5 +21,9 @@ public class RareIceConfig implements IFeatureConfig {
     
     public RareIceConfig(int size) {
         this.size = size;
+    }
+    
+    public int getSize() {
+        return size;
     }
 }

@@ -12,6 +12,9 @@
     "main": [
       "me.shedaniel.rareice.RareIce"
     ],
+    "cloth-early-init": [
+      "me.shedaniel.rareice.RareIce"
+    ],
     "client": [
       "me.shedaniel.rareice.RareIceClient"
     ]
