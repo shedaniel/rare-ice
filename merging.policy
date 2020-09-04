@@ -1,6 +1,0 @@
-FABRIC /assets/rare-ice/models/item/rare_ice.json
-FABRIC /assets/rare-ice/blockstates/rare_ice.json
-FORGE /META-INF/MANIFEST.MF
-FABRIC /data/rare-ice/loot_tables/blocks/rare_ice.json
-FABRIC /data/rare-ice/loot_tables/chests/rare_ice.json
-FABRIC /data/minecraft/tags/blocks/ice.json

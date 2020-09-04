@@ -1,25 +1,24 @@
 package me.shedaniel.rareice.forge.world.gen.feature;
 
-import com.mojang.serialization.Codec;
 import me.shedaniel.rareice.forge.RareIce;
 import me.shedaniel.rareice.forge.blocks.entities.RareIceTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.ISeedReader;
-import net.minecraft.world.gen.ChunkGenerator;
-import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.World;
+import net.minecraft.world.gen.feature.WorldGenerator;
 
 import java.util.BitSet;
 import java.util.Random;
 
-public class RareIceFeature extends Feature<RareIceConfig> {
-    public RareIceFeature(Codec<RareIceConfig> codec) {
-        super(codec);
+public class RareIceFeature {
+    private RareIceConfig config;
+    
+    public RareIceFeature(RareIceConfig config) {
+        this.config = config;
     }
     
-    @Override
-    public boolean func_241855_a(ISeedReader world, ChunkGenerator generator, Random random, BlockPos pos, RareIceConfig config) {
+    public boolean generate(World world, Random random, BlockPos pos, BlockPos initialPos) {
         float f = random.nextFloat() * 3.1415927F;
         float g = (float) config.size / 8.0F;
         int i = MathHelper.ceil(((float) config.size / 16.0F * 2.0F + 1.0F) / 2.0F);
@@ -35,13 +34,13 @@ public class RareIceFeature extends Feature<RareIceConfig> {
         int q = 2 * (MathHelper.ceil(g) + i);
         int r = 2 * (2 + i);
         
-        return this.generateVeinPart(world, random, config, d, e, h, j, l, m, n, o, p, q, r);
+        return this.generateVeinPart(world, random, config, initialPos, d, e, h, j, l, m, n, o, p, q, r);
     }
     
-    protected boolean generateVeinPart(ISeedReader world, Random random, RareIceConfig config, double startX, double endX, double startZ, double endZ, double startY, double endY, int x, int y, int z, int size, int i) {
+    protected boolean generateVeinPart(World world, Random random, RareIceConfig config, BlockPos initialPos, double startX, double endX, double startZ, double endZ, double startY, double endY, int x, int y, int z, int size, int i) {
         int j = 0;
         BitSet bitSet = new BitSet(size * i * size);
-        BlockPos.Mutable mutable = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         double[] ds = new double[config.size * 4];
         
         int m;
@@ -51,9 +50,9 @@ public class RareIceFeature extends Feature<RareIceConfig> {
         double r;
         for (m = 0; m < config.size; ++m) {
             float f = (float) m / (float) config.size;
-            o = MathHelper.lerp(f, startX, endX);
-            p = MathHelper.lerp(f, startY, endY);
-            q = MathHelper.lerp(f, startZ, endZ);
+            o = MathHelper.clampedLerp(f, startX, endX);
+            p = MathHelper.clampedLerp(f, startY, endY);
+            q = MathHelper.clampedLerp(f, startZ, endZ);
             r = random.nextDouble() * (double) config.size / 16.0D;
             double l = ((double) (MathHelper.sin(3.1415927F * f) + 1.0F) * r + 1.0D) / 2.0D;
             ds[m * 4] = o;
@@ -108,11 +107,13 @@ public class RareIceFeature extends Feature<RareIceConfig> {
                                         if (!bitSet.get(am)) {
                                             bitSet.set(am);
                                             mutable.setPos(ag, ai, ak);
-                                            if (config.predicate.test(world.getBlockState(mutable))) {
-                                                world.setBlockState(mutable, RareIce.RARE_ICE_BLOCK.get().getDefaultState(), 2);
+                                            if ((world.isChunkGeneratedAt(ag >> 4, ak >> 4) || (initialPos.getX() >> 4 == ag >> 4 && initialPos.getZ() >> 4 == ak >> 4)) && config.predicate.test(world.getBlockState(mutable))) {
+//                                            if (config.predicate.test(world.getBlockState(mutable))) {
+                                                System.out.println(mutable);
+                                                world.setBlockState(mutable, RareIce.rareIceBlock.getDefaultState(), 2 | 16);
                                                 TileEntity entity = world.getTileEntity(mutable);
                                                 if (entity instanceof RareIceTileEntity) {
-                                                    ((RareIceTileEntity) entity).addLootTable(world.getWorld());
+                                                    ((RareIceTileEntity) entity).addLootTable(world);
                                                 }
                                                 ++j;
                                             }

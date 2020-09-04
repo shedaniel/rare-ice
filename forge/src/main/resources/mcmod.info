@@ -1,0 +1,15 @@
+[
+  {
+    "modid": "rare-ice",
+    "name": "Rare Ice",
+    "description": "Adds rare ice into the world. Can you find them?",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "updateUrl": "",
+    "authorList": ["shedaniel"],
+    "logoFile": "",
+    "screenshots": ["icon.png"],
+    "parent": "",
+    "dependencies": []
+  }
+]

@@ -1,7 +1,7 @@
 {
   "variants": {
-    "": {
-      "model": "block/ice"
+    "normal": {
+      "model": "ice"
     }
   }
 }

@@ -3,14 +3,21 @@ buildscript {
         maven { url "https://files.minecraftforge.net/maven" }
         jcenter()
         mavenCentral()
+        maven { url "https://repo.spongepowered.org/maven/" }
     }
     dependencies {
         classpath(group: "net.minecraftforge.gradle", name: "ForgeGradle", version: "3.+", changing: true)
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
     }
+}
+
+repositories {
+    maven { url "https://repo.spongepowered.org/maven/" }
 }
 
 apply plugin: "net.minecraftforge.gradle"
 apply plugin: "eclipse"
+apply plugin: 'org.spongepowered.mixin'
 
 minecraft {
     mappings(channel: "snapshot", version: rootProject.mcp_snapshot)
@@ -18,6 +25,7 @@ minecraft {
     runs {
         client {
             workingDirectory project.file("run")
+            args '--mixin.config', 'rare-ice.mixins.json'
             mods {
                 examplemod {
                     source sourceSets.main
@@ -26,6 +34,7 @@ minecraft {
         }
         server {
             workingDirectory project.file("run")
+            args '--mixin.config', 'rare-ice.mixins.json'
             mods {
                 examplemod {
                     source sourceSets.main
@@ -35,11 +44,42 @@ minecraft {
     }
 }
 
+mixin {
+    add sourceSets.main, "mixins.rare-ice.refmap.json"
+}
+
 repositories {
     maven { url "https://files.minecraftforge.net/maven" }
     maven { url "https://dl.bintray.com/shedaniel/yarn2srg" }
 }
 
+configurations {
+    shadow {
+        compile.extendsFrom(shadow)
+    }
+}
+
 dependencies {
     minecraft("net.minecraftforge:forge:${rootProject.forge_minecraft_version}-${project.forge_version}")
+    shadow('org.spongepowered:mixin:0.8-SNAPSHOT') {
+        exclude module: 'launchwrapper'
+        exclude module: 'guava'
+        exclude module: 'gson'
+    }
 }
+
+jar {
+    manifest {
+        attributes(
+                'MixinConfigs': 'rare-ice.mixins.json',
+                'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
+                'TweakOrder': '0',
+                'FMLCorePluginContainsFMLMod': 'true',
+                'ForceLoadAsMod': 'true',
+        )
+    }
+
+    from configurations.shadow.collect { it.isDirectory() ? it : zipTree(it) }
+}
+
+sourceSets { main { output.resourcesDir = output.classesDir } }

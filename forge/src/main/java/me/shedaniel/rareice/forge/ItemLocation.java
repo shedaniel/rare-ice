@@ -1,9 +1,9 @@
 package me.shedaniel.rareice.forge;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.math.Vec3d;
 
-public class ItemLocation extends Vector3d {
+public class ItemLocation extends Vec3d {
     public final double yaw;
     public final double pitch;
     
@@ -19,7 +19,7 @@ public class ItemLocation extends Vector3d {
         this.pitch = pitch;
     }
     
-    public static ItemLocation fromTag(CompoundNBT compoundNBT) {
+    public static ItemLocation fromTag(NBTTagCompound compoundNBT) {
         double x = compoundNBT.getDouble("x");
         double y = compoundNBT.getDouble("y");
         double z = compoundNBT.getDouble("z");
@@ -28,11 +28,11 @@ public class ItemLocation extends Vector3d {
         return new ItemLocation(x, y, z, yaw, pitch);
     }
     
-    public void toTag(CompoundNBT compoundNBT) {
-        compoundNBT.putDouble("x", x);
-        compoundNBT.putDouble("y", y);
-        compoundNBT.putDouble("z", z);
-        compoundNBT.putDouble("yaw", yaw);
-        compoundNBT.putDouble("pitch", pitch);
+    public void toTag(NBTTagCompound compoundNBT) {
+        compoundNBT.setDouble("x", x);
+        compoundNBT.setDouble("y", y);
+        compoundNBT.setDouble("z", z);
+        compoundNBT.setDouble("yaw", yaw);
+        compoundNBT.setDouble("pitch", pitch);
     }
 }

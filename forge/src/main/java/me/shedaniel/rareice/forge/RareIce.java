@@ -1,67 +1,52 @@
 package me.shedaniel.rareice.forge;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import me.shedaniel.rareice.forge.blocks.RareIceBlock;
 import me.shedaniel.rareice.forge.blocks.entities.RareIceTileEntity;
-import me.shedaniel.rareice.forge.world.gen.feature.RareIceConfig;
-import me.shedaniel.rareice.forge.world.gen.feature.RareIceFeature;
-import net.minecraft.block.AbstractBlock;
+import me.shedaniel.rareice.forge.mixin.BlockAccessor;
+import me.shedaniel.rareice.forge.proxy.CommonProxy;
+import me.shedaniel.rareice.forge.world.gen.feature.RareIceWorldGen;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.block.SoundType;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.ActionResultType;
+import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.WorldGenRegistries;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeGenerationSettings;
-import net.minecraft.world.gen.GenerationStage;
-import net.minecraft.world.gen.feature.ConfiguredFeature;
-import net.minecraft.world.gen.feature.Feature;
-import net.minecraft.world.gen.placement.Placement;
-import net.minecraft.world.gen.placement.TopSolidRangeConfig;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.ToolType;
+import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.fml.common.SidedProxy;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
 import java.util.Properties;
-import java.util.function.Supplier;
 
-@Mod("rare-ice")
+@Mod(modid = "rare-ice")
+@Mod.EventBusSubscriber
 public class RareIce {
+    @SidedProxy(clientSide = "me.shedaniel.rareice.forge.proxy.ClientProxy", serverSide = "me.shedaniel.rareice.forge.proxy.CommonProxy")
+    public static CommonProxy proxy;
+    public static final String RARE_ICE_BLOCK_LOC = "rare-ice:rare_ice";
     
-    public static final DeferredRegister<TileEntityType<?>> TILE_ENTITY_REGISTRY = DeferredRegister.create(ForgeRegistries.TILE_ENTITIES, "rare-ice");
-    public static final DeferredRegister<Block> BLOCK_REGISTRY = DeferredRegister.create(ForgeRegistries.BLOCKS, "rare-ice");
-    public static final DeferredRegister<Feature<?>> FEATURE_REGISTRY = DeferredRegister.create(ForgeRegistries.FEATURES, "rare-ice");
-    
-    public static final RegistryObject<Block> RARE_ICE_BLOCK = BLOCK_REGISTRY.register("rare_ice", () ->
-            new RareIceBlock(AbstractBlock.Properties.from(Blocks.ICE).allowsSpawning((state, world, pos, type) -> type == EntityType.POLAR_BEAR).harvestTool(ToolType.PICKAXE).harvestLevel(0)));
-    public static final RegistryObject<TileEntityType<RareIceTileEntity>> RARE_ICE_TILE_ENTITY_TYPE = TILE_ENTITY_REGISTRY.register("rare_ice", () ->
-            TileEntityType.Builder.create(RareIceTileEntity::new, RARE_ICE_BLOCK.get()).build(null));
-    public static final RegistryObject<Feature<RareIceConfig>> RARE_ICE_FEATURE = FEATURE_REGISTRY.register("rare_ice", () -> new RareIceFeature(RareIceConfig.CODEC));
+    @GameRegistry.ObjectHolder(RARE_ICE_BLOCK_LOC)
+    public static Block rareIceBlock;
     
     public static boolean allowInsertingItemsToIce = true;
     public static int probabilityOfRareIce = 6;
+    
+    public RareIce() {
+        MinecraftForge.ORE_GEN_BUS.register(RareIceWorldGen.class);
+    }
     
     private static void loadConfig(Path file) {
         allowInsertingItemsToIce = true;
@@ -93,72 +78,45 @@ public class RareIce {
         }
     }
     
-    public RareIce() {
-        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
-        BLOCK_REGISTRY.register(bus);
-        TILE_ENTITY_REGISTRY.register(bus);
-        FEATURE_REGISTRY.register(bus);
-        
-        bus.addListener(RareIce::onCommonSetup);
-        MinecraftForge.EVENT_BUS.addListener(RareIce::rightClickBlock);
+    @Mod.EventHandler
+    public void preInit(FMLPreInitializationEvent event) {
+        loadConfig(event.getModConfigurationDirectory().toPath().resolve("rare-ice.properties"));
+        proxy.preInit();
     }
     
-    public static void onCommonSetup(FMLCommonSetupEvent event) {
-        loadConfig(FMLPaths.CONFIGDIR.get().resolve("rare-ice.properties"));
-        ConfiguredFeature<?, ?> feature = RARE_ICE_FEATURE.get().withConfiguration(RareIceConfig.DEFAULT).withPlacement(Placement.field_242907_l.configure(new TopSolidRangeConfig(32, 128, 256))).func_242728_a().func_242731_b(probabilityOfRareIce);
-        Registry.register(WorldGenRegistries.field_243653_e, new ResourceLocation("rare-ice:rare-ice"), feature);
-        WorldGenRegistries.field_243657_i.stream().forEach(biome -> RareIce.handleBiome(biome, feature));
+    @Mod.EventHandler
+    public void init(FMLInitializationEvent event) {
+        GameRegistry.registerTileEntity(RareIceTileEntity.class, new ResourceLocation(RARE_ICE_BLOCK_LOC));
     }
     
-    private static void rightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+    @SubscribeEvent
+    public static void registerBlocks(RegistryEvent.Register<Block> event) {
+        event.getRegistry().register(((BlockAccessor) new RareIceBlock().setHardness(0.5F).setLightOpacity(3)).invokeSetSoundType(SoundType.GLASS).setUnlocalizedName(RARE_ICE_BLOCK_LOC).setRegistryName(RARE_ICE_BLOCK_LOC));
+    }
+    
+    @SubscribeEvent
+    public static void rightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (!allowInsertingItemsToIce) return;
-        PlayerEntity player = event.getPlayer();
+        EntityPlayer player = event.getEntityPlayer();
         if (player.isSneaking()) return;
         BlockPos pos = event.getPos();
         World world = event.getWorld();
-        BlockState state = world.getBlockState(pos);
-        if ((state.getBlock() == Blocks.ICE || state.getBlock() == RareIce.RARE_ICE_BLOCK.get())) {
+        IBlockState state = world.getBlockState(pos);
+        if ((state.getBlock() == Blocks.ICE || state.getBlock() == RareIce.rareIceBlock)) {
             TileEntity blockEntity = world.getTileEntity(pos);
             if (blockEntity == null) {
-                world.setBlockState(pos, RareIce.RARE_ICE_BLOCK.get().getDefaultState());
+                world.setBlockState(pos, RareIce.rareIceBlock.getDefaultState());
                 blockEntity = world.getTileEntity(pos);
             }
             if (blockEntity instanceof RareIceTileEntity) {
                 RareIceTileEntity rareIceBlockEntity = (RareIceTileEntity) blockEntity;
                 ItemStack itemStack = player.getHeldItem(event.getHand());
-                itemStack = player.abilities.isCreativeMode ? itemStack.copy() : itemStack;
-                ActionResultType type = rareIceBlockEntity.addItem(world, itemStack, player, event.getSide().isServer());
-                if (type != ActionResultType.PASS)
+                itemStack = player.capabilities.isCreativeMode ? itemStack.copy() : itemStack;
+                EnumActionResult type = rareIceBlockEntity.addItem(world, itemStack, player, event.getSide().isServer());
+                if (type != EnumActionResult.PASS)
                     event.setCanceled(true);
                 event.setCancellationResult(type);
             }
         }
-    }
-    
-    private static void handleBiome(Biome biome, ConfiguredFeature<?, ?> feature) {
-        registerFeature(
-                biome,
-                GenerationStage.Decoration.TOP_LAYER_MODIFICATION,
-                () -> feature
-        );
-    }
-    
-    public static void registerFeature(Biome biome, GenerationStage.Decoration generationStep, Supplier<ConfiguredFeature<?, ?>> configuredFeature) {
-        BiomeGenerationSettings generationSettings = biome.func_242440_e();
-        List<List<Supplier<ConfiguredFeature<?, ?>>>> features = generationSettings.field_242484_f;
-        if (features instanceof ImmutableList) {
-            features = generationSettings.field_242484_f = Lists.newArrayList(features);
-        }
-        
-        for (int i = features.size(); i <= generationStep.ordinal(); ++i) {
-            features.add(Lists.newArrayList());
-        }
-        
-        List<Supplier<ConfiguredFeature<?, ?>>> suppliers = features.get(generationStep.ordinal());
-        if (suppliers instanceof ImmutableList) {
-            features.set(generationStep.ordinal(), suppliers = Lists.newArrayList(suppliers));
-        }
-        
-        suppliers.add(configuredFeature);
     }
 }
