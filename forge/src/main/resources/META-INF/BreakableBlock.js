@@ -12,10 +12,10 @@ function initializeCoreMod() {
         "smooth-scrolling-everywhere": {
             'target': {
                 'type': 'CLASS',
-                'name': 'net.minecraft.block.BreakableBlock'
+                'name': 'net.minecraft.world.level.block'
             },
             'transformer': function (classNode) {
-                var isSideInvisible = ASMAPI.mapMethod("func_200122_a");
+                var isSideInvisible = ASMAPI.mapMethod("m_6104_");
                 for (i in classNode.methods) {
                     var method = classNode.methods[i];
                     if (method.name === isSideInvisible) {
@@ -27,9 +27,9 @@ function initializeCoreMod() {
                                 instructions.insertBefore(instruction, new LabelNode());
                                 instructions.insertBefore(instruction, new VarInsnNode(Opcodes.ALOAD, 0));
                                 instructions.insertBefore(instruction, new VarInsnNode(Opcodes.ALOAD, 0));
-                                instructions.insertBefore(instruction, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/block/BreakableBlock", "getBlock", "()Lnet/minecraft/block/Block;", false));
+                                instructions.insertBefore(instruction, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/level/block/BreakableBlock", "self", "()Lnet/minecraft/world/level/block/Block;", false));
                                 instructions.insertBefore(instruction, new VarInsnNode(Opcodes.ALOAD, 2));
-                                instructions.insertBefore(instruction, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/shedaniel/rareice/forge/RareIceClient", "isSideInvisibleForIce", "(Lnet/minecraft/block/Block;Lnet/minecraft/block/BlockState;)Z", false));
+                                instructions.insertBefore(instruction, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/shedaniel/rareice/forge/RareIceClient", "isSideInvisibleForIce", "(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/state/BlockState;)Z", false));
                                 instructions.insertBefore(instruction, new JumpInsnNode(Opcodes.IFEQ, instruction));
                                 instructions.insertBefore(instruction, new InsnNode(Opcodes.ICONST_1));
                                 instructions.insertBefore(instruction, new InsnNode(Opcodes.IRETURN));

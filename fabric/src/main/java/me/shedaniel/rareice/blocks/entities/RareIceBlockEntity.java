@@ -21,8 +21,8 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Tickable;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 
@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class RareIceBlockEntity extends BlockEntity implements Clearable, BlockEntityClientSerializable, Tickable {
+public class RareIceBlockEntity extends BlockEntity implements Clearable, BlockEntityClientSerializable {
     private static final Random RANDOM = new Random();
     private static final Identifier LOOT_TABLE = new Identifier("rare-ice:chests/rare_ice");
     private final DefaultedList<ItemStack> itemsContained;
@@ -38,8 +38,8 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable, BlockE
     private boolean setup = false;
     private int delay = 0;
     
-    public RareIceBlockEntity() {
-        super(RareIce.RARE_ICE_BLOCK_ENTITY_TYPE);
+    public RareIceBlockEntity(BlockPos pos, BlockState state) {
+        super(RareIce.RARE_ICE_BLOCK_ENTITY_TYPE, pos, state);
         this.itemsContained = DefaultedList.of();
         this.itemsLocations = new ArrayList<>();
     }
@@ -59,7 +59,7 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable, BlockE
     }
     
     @Override
-    public void fromTag(BlockState state, CompoundTag tag) {
+    public void fromTag(CompoundTag tag) {
         loadInitialChunkData(tag);
         this.delay = tag.getInt("RevertDelay");
     }
@@ -95,7 +95,7 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable, BlockE
     }
     
     private void loadInitialChunkData(CompoundTag tag) {
-        super.fromTag(null, tag);
+        super.fromTag(tag);
         this.itemsContained.clear();
         this.itemsLocations.clear();
         ListTag itemsTag = tag.getList("Items", 10);
@@ -114,11 +114,10 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable, BlockE
         setup = true;
     }
     
-    @Override
-    public void tick() {
-        if (setup) {
-            setup = false;
-            delay = 0;
+    public static void tick(World world, BlockPos pos, BlockState blockState, RareIceBlockEntity blockEntity) {
+        if (blockEntity.setup) {
+            blockEntity.setup = false;
+            blockEntity.delay = 0;
             LootTable lootTable = world.getServer().getLootManager().getTable(LOOT_TABLE);
             LootContext.Builder builder = new LootContext.Builder((ServerWorld) world);
             List<ItemStack> drops = lootTable.getDrops(builder.build(LootContextTypes.EMPTY));
@@ -126,18 +125,18 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable, BlockE
             if (drops.size() >= 1) {
                 for (int i = 0; i < size; i++) {
                     int index = world.random.nextInt(drops.size());
-                    addItem(world, drops.get(index), null);
+                    blockEntity.addItem(world, drops.get(index), null);
                     drops.remove(index);
                 }
             }
-        } else if (itemsContained.isEmpty()) {
-            delay++;
-            if (delay > 20) {
+        } else if (blockEntity.itemsContained.isEmpty()) {
+            blockEntity.delay++;
+            if (blockEntity.delay > 20) {
                 world.setBlockState(pos, Blocks.ICE.getDefaultState());
-                markRemoved();
+                blockEntity.markRemoved();
             }
         } else {
-            delay = 0;
+            blockEntity.delay = 0;
         }
     }
     

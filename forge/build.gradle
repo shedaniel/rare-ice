@@ -5,7 +5,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath(group: "net.minecraftforge.gradle", name: "ForgeGradle", version: "3.+", changing: true)
+        classpath(group: "net.minecraftforge.gradle", name: "ForgeGradle", version: "5.+", changing: true)
     }
 }
 
@@ -13,7 +13,7 @@ apply plugin: "net.minecraftforge.gradle"
 apply plugin: "eclipse"
 
 minecraft {
-    mappings(channel: "snapshot", version: rootProject.mcp_snapshot)
+    mappings(channel: "official", version: "1.17.1")
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     runs {
         client {
@@ -37,7 +37,6 @@ minecraft {
 
 repositories {
     maven { url "https://files.minecraftforge.net/maven" }
-    maven { url "https://dl.bintray.com/shedaniel/yarn2srg" }
 }
 
 dependencies {

@@ -7,6 +7,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
+import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.util.math.Vector3f;
@@ -16,9 +17,8 @@ import net.minecraft.util.collection.DefaultedList;
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
-public class RareIceBlockEntityRenderer extends BlockEntityRenderer<RareIceBlockEntity> {
-    public RareIceBlockEntityRenderer(BlockEntityRenderDispatcher dispatcher) {
-        super(dispatcher);
+public class RareIceBlockEntityRenderer implements BlockEntityRenderer<RareIceBlockEntity> {
+    public RareIceBlockEntityRenderer(BlockEntityRendererFactory.Context dispatcher) {
     }
     
     @Override
@@ -39,7 +39,7 @@ public class RareIceBlockEntityRenderer extends BlockEntityRenderer<RareIceBlock
                 if (pitchDegrees < 0) pitchDegrees += 360.0;
                 matrices.multiply(Vector3f.POSITIVE_X.getDegreesQuaternion((float) pitchDegrees));
                 matrices.scale(0.8f, 0.8f, 0.8f);
-                MinecraftClient.getInstance().getItemRenderer().renderItem(stack, ModelTransformation.Mode.FIXED, light, overlay, matrices, vertexConsumers);
+                MinecraftClient.getInstance().getItemRenderer().renderItem(stack, ModelTransformation.Mode.FIXED, light, overlay, matrices, vertexConsumers, 0);
                 matrices.pop();
             }
         }

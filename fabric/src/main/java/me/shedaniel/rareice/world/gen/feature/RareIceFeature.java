@@ -9,6 +9,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.StructureWorldAccess;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.util.FeatureContext;
 
 import java.util.BitSet;
 import java.util.Random;
@@ -19,7 +20,11 @@ public class RareIceFeature extends Feature<RareIceConfig> {
     }
     
     @Override
-    public boolean generate(StructureWorldAccess world, ChunkGenerator generator, Random random, BlockPos pos, RareIceConfig config) {
+    public boolean generate(FeatureContext<RareIceConfig> context) {
+        Random random = context.getRandom();
+        BlockPos pos = context.getOrigin();
+        RareIceConfig config = context.getConfig();
+        StructureWorldAccess world = context.getWorld();
         float f = random.nextFloat() * 3.1415927F;
         float g = (float) config.size / 8.0F;
         int i = MathHelper.ceil(((float) config.size / 16.0F * 2.0F + 1.0F) / 2.0F);

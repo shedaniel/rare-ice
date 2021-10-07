@@ -2,35 +2,35 @@ package me.shedaniel.rareice.forge.blocks.entities;
 
 import me.shedaniel.rareice.forge.ItemLocation;
 import me.shedaniel.rareice.forge.RareIce;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.IClearable;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.loot.LootContext;
-import net.minecraft.loot.LootParameterSets;
-import net.minecraft.loot.LootTable;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.ITickableTileEntity;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.world.Clearable;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class RareIceTileEntity extends TileEntity implements IClearable, ITickableTileEntity {
+public class RareIceTileEntity extends BlockEntity implements Clearable {
     private static final Random RANDOM = new Random();
     private static final ResourceLocation LOOT_TABLE = new ResourceLocation("rare-ice:chests/rare_ice");
     private final NonNullList<ItemStack> itemsContained;
@@ -38,14 +38,14 @@ public class RareIceTileEntity extends TileEntity implements IClearable, ITickab
     private boolean setup = false;
     private int delay = 0;
     
-    public RareIceTileEntity() {
-        super(RareIce.RARE_ICE_TILE_ENTITY_TYPE.get());
+    public RareIceTileEntity(BlockPos pos, BlockState state) {
+        super(RareIce.RARE_ICE_TILE_ENTITY_TYPE.get(), pos, state);
         this.itemsContained = NonNullList.create();
         this.itemsLocations = new ArrayList<>();
     }
     
     @Override
-    public void clear() {
+    public void clearContent() {
         this.itemsContained.clear();
         this.itemsLocations.clear();
     }
@@ -59,32 +59,32 @@ public class RareIceTileEntity extends TileEntity implements IClearable, ITickab
     }
     
     @Override
-    public void fromTag(BlockState state, CompoundNBT tag) {
-        loadInitialChunkData(state, tag);
+    public void load(CompoundTag tag) {
+        loadInitialChunkData(tag);
         this.delay = tag.getInt("RevertDelay");
     }
     
     @Override
-    public CompoundNBT write(CompoundNBT tag) {
+    public CompoundTag save(CompoundTag tag) {
         saveInitialChunkData(tag);
         tag.putInt("RevertDelay", delay);
         return tag;
     }
     
-    private CompoundNBT saveInitialChunkData(CompoundNBT tag) {
-        super.write(tag);
-        ListNBT itemsTag = new ListNBT();
-        ListNBT itemLocationsTag = new ListNBT();
+    private CompoundTag saveInitialChunkData(CompoundTag tag) {
+        super.save(tag);
+        ListTag itemsTag = new ListTag();
+        ListTag itemLocationsTag = new ListTag();
         for (int i = 0; i < itemsLocations.size(); ++i) {
             ItemLocation itemLocation = itemsLocations.get(i);
             ItemStack stack = itemsContained.get(i);
             if (!stack.isEmpty()) {
-                CompoundNBT CompoundNBT = new CompoundNBT();
-                stack.write(CompoundNBT);
+                CompoundTag CompoundNBT = new CompoundTag();
+                stack.save(CompoundNBT);
                 itemsTag.add(CompoundNBT);
             }
             if (!stack.isEmpty()) {
-                CompoundNBT CompoundNBT = new CompoundNBT();
+                CompoundTag CompoundNBT = new CompoundTag();
                 itemLocation.toTag(CompoundNBT);
                 itemLocationsTag.add(CompoundNBT);
             }
@@ -94,100 +94,99 @@ public class RareIceTileEntity extends TileEntity implements IClearable, ITickab
         return tag;
     }
     
-    private void loadInitialChunkData(BlockState state, CompoundNBT tag) {
-        super.fromTag(state, tag);
+    private void loadInitialChunkData(CompoundTag tag) {
+        super.load(tag);
         this.itemsContained.clear();
         this.itemsLocations.clear();
-        ListNBT itemsTag = tag.getList("Items", 10);
+        ListTag itemsTag = tag.getList("Items", 10);
         for (int i = 0; i < itemsTag.size(); ++i) {
-            CompoundNBT CompoundNBT = itemsTag.getCompound(i);
-            itemsContained.add(ItemStack.read(CompoundNBT));
+            CompoundTag CompoundNBT = itemsTag.getCompound(i);
+            itemsContained.add(ItemStack.of(CompoundNBT));
         }
-        ListNBT itemLocationsTag = tag.getList("ItemLocations", 10);
+        ListTag itemLocationsTag = tag.getList("ItemLocations", 10);
         for (int i = 0; i < itemLocationsTag.size(); ++i) {
-            CompoundNBT CompoundNBT = itemLocationsTag.getCompound(i);
+            CompoundTag CompoundNBT = itemLocationsTag.getCompound(i);
             itemsLocations.add(ItemLocation.fromTag(CompoundNBT));
         }
     }
     
-    public void addLootTable(World world) {
+    public void addLootTable(Level world) {
         setup = true;
     }
     
-    @Override
-    public void tick() {
-        if (setup) {
-            setup = false;
-            delay = 0;
-            LootTable lootTable = world.getServer().getLootTableManager().getLootTableFromLocation(LOOT_TABLE);
-            LootContext.Builder builder = new LootContext.Builder((ServerWorld) world);
-            List<ItemStack> drops = lootTable.generate(builder.build(LootParameterSets.EMPTY));
-            int size = MathHelper.clamp(world.rand.nextInt(5) - (world.rand.nextInt(1) + 2), 0, drops.size());
+    public static void tick(Level world, BlockPos pos, BlockState blockState, RareIceTileEntity blockEntity) {
+        if (blockEntity.setup) {
+            blockEntity.setup = false;
+            blockEntity.delay = 0;
+            LootTable lootTable = world.getServer().getLootTables().get(LOOT_TABLE);
+            LootContext.Builder builder = new LootContext.Builder((ServerLevel) world);
+            List<ItemStack> drops = lootTable.getRandomItems(builder.create(LootContextParamSets.EMPTY));
+            int size = Mth.clamp(world.random.nextInt(5) - (world.random.nextInt(1) + 2), 0, drops.size());
             if (drops.size() >= 1) {
                 for (int i = 0; i < size; i++) {
-                    int index = world.rand.nextInt(drops.size());
-                    addItem(world, drops.get(index), null);
+                    int index = world.random.nextInt(drops.size());
+                    blockEntity.addItem(world, drops.get(index), null);
                     drops.remove(index);
                 }
             }
-        } else if (itemsContained.isEmpty()) {
-            delay++;
-            if (delay > 20) {
-                world.setBlockState(pos, Blocks.ICE.getDefaultState());
-                remove();
+        } else if (blockEntity.itemsContained.isEmpty()) {
+            blockEntity.delay++;
+            if (blockEntity.delay > 20) {
+                world.setBlockAndUpdate(pos, Blocks.ICE.defaultBlockState());
+                blockEntity.setRemoved();
             }
         } else {
-            delay = 0;
+            blockEntity.delay = 0;
         }
     }
     
-    public ActionResultType addItem(World world, ItemStack itemStack, PlayerEntity nullablePlayer) {
+    public InteractionResult addItem(Level world, ItemStack itemStack, Player nullablePlayer) {
         return addItem(world, itemStack, nullablePlayer, true);
     }
     
-    public ActionResultType addItem(World world, ItemStack itemStack, PlayerEntity nullablePlayer, boolean actuallyDoIt) {
+    public InteractionResult addItem(Level world, ItemStack itemStack, Player nullablePlayer, boolean actuallyDoIt) {
         if (itemStack.getItem() instanceof BlockItem) {
             Material material = ((BlockItem) itemStack.getItem()).getBlock().material;
-            if (material == Material.ICE || material == Material.PACKED_ICE)
-                return ActionResultType.PASS;
+            if (material == Material.ICE || material == Material.ICE_SOLID)
+                return InteractionResult.PASS;
         }
         if (getItemsContained().size() < 8 && itemStack.getCount() >= 1) {
             if (actuallyDoIt) {
                 getItemsContained().add(itemStack.split(1));
-                Random random = world.rand;
+                Random random = world.random;
                 if (random == null) random = RANDOM;
                 getItemsLocations().add(new ItemLocation(random.nextDouble() * .95 + .1, random.nextDouble() * .7 + .1, random.nextDouble() * .95 + .1));
                 updateListeners();
             }
-            if (nullablePlayer != null && world.isRemote())
-                nullablePlayer.playSound(SoundEvents.BLOCK_CORAL_BLOCK_BREAK, 1.0F, 1.0F);
-            return ActionResultType.SUCCESS;
+            if (nullablePlayer != null && world.isClientSide())
+                nullablePlayer.playSound(SoundEvents.CORAL_BLOCK_BREAK, 1.0F, 1.0F);
+            return InteractionResult.SUCCESS;
         }
-        return ActionResultType.CONSUME;
+        return InteractionResult.CONSUME;
     }
     
     private void updateListeners() {
-        this.markDirty();
-        this.getWorld().notifyBlockUpdate(this.getPos(), this.getBlockState(), this.getBlockState(), 3);
+        this.setChanged();
+        this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
     }
     
     @Override
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(getPos(), 1, getUpdateTag());
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return new ClientboundBlockEntityDataPacket(getBlockPos(), 1, getUpdateTag());
     }
     
     @Override
-    public CompoundNBT getUpdateTag() {
-        return saveInitialChunkData(new CompoundNBT());
+    public CompoundTag getUpdateTag() {
+        return saveInitialChunkData(new CompoundTag());
     }
     
     @Override
-    public void handleUpdateTag(BlockState state, CompoundNBT tag) {
-        loadInitialChunkData(state, tag);
+    public void handleUpdateTag(CompoundTag tag) {
+        loadInitialChunkData(tag);
     }
     
     @Override
-    public void onDataPacket(NetworkManager manager, SUpdateTileEntityPacket packet) {
-        handleUpdateTag(getBlockState(), packet.getNbtCompound());
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        handleUpdateTag(packet.getTag());
     }
 }

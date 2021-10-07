@@ -1,78 +1,74 @@
 package me.shedaniel.rareice.forge;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import me.shedaniel.rareice.forge.blocks.RareIceBlock;
 import me.shedaniel.rareice.forge.blocks.entities.RareIceTileEntity;
 import me.shedaniel.rareice.forge.world.gen.feature.RareIceConfig;
 import me.shedaniel.rareice.forge.world.gen.feature.RareIceFeature;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.WorldGenRegistries;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeGenerationSettings;
-import net.minecraft.world.gen.GenerationStage;
-import net.minecraft.world.gen.feature.ConfiguredFeature;
-import net.minecraft.world.gen.feature.Feature;
-import net.minecraft.world.gen.placement.Placement;
-import net.minecraft.world.gen.placement.TopSolidRangeConfig;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.data.BuiltinRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.levelgen.VerticalAnchor;
+import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.configurations.RangeDecoratorConfiguration;
+import net.minecraft.world.level.levelgen.heightproviders.UniformHeight;
+import net.minecraft.world.level.levelgen.placement.FeatureDecorator;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.ToolType;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.world.BiomeLoadingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.fmllegacy.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
 import java.util.Properties;
-import java.util.function.Supplier;
 
-@Mod("rare-ice")
+@Mod("rare_ice")
 public class RareIce {
     
-    public static final DeferredRegister<TileEntityType<?>> TILE_ENTITY_REGISTRY = DeferredRegister.create(ForgeRegistries.TILE_ENTITIES, "rare-ice");
+    public static final DeferredRegister<BlockEntityType<?>> TILE_ENTITY_REGISTRY = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITIES, "rare-ice");
     public static final DeferredRegister<Block> BLOCK_REGISTRY = DeferredRegister.create(ForgeRegistries.BLOCKS, "rare-ice");
     public static final DeferredRegister<Feature<?>> FEATURE_REGISTRY = DeferredRegister.create(ForgeRegistries.FEATURES, "rare-ice");
     
     public static final RegistryObject<Block> RARE_ICE_BLOCK = BLOCK_REGISTRY.register("rare_ice", () ->
-            new RareIceBlock(AbstractBlock.Properties.from(Blocks.ICE).allowsSpawning((state, world, pos, type) -> type == EntityType.POLAR_BEAR).harvestTool(ToolType.PICKAXE).harvestLevel(0)));
-    public static final RegistryObject<TileEntityType<RareIceTileEntity>> RARE_ICE_TILE_ENTITY_TYPE = TILE_ENTITY_REGISTRY.register("rare_ice", () ->
-            TileEntityType.Builder.create(RareIceTileEntity::new, RARE_ICE_BLOCK.get()).build(null));
+            new RareIceBlock(BlockBehaviour.Properties.copy(Blocks.ICE).isValidSpawn((state, world, pos, type) -> type == EntityType.POLAR_BEAR)));
+    public static final RegistryObject<BlockEntityType<RareIceTileEntity>> RARE_ICE_TILE_ENTITY_TYPE = TILE_ENTITY_REGISTRY.register("rare_ice", () ->
+            BlockEntityType.Builder.of(RareIceTileEntity::new, RARE_ICE_BLOCK.get()).build(null));
     public static final RegistryObject<Feature<RareIceConfig>> RARE_ICE_FEATURE = FEATURE_REGISTRY.register("rare_ice", () -> new RareIceFeature(RareIceConfig.CODEC));
-    
+    public static ConfiguredFeature<?, ?> configuredFeature;
     public static boolean allowInsertingItemsToIce = true;
-    public static int probabilityOfRareIce = 6;
+    public static int probabilityOfRareIce = 3;
     
     private static void loadConfig(Path file) {
         allowInsertingItemsToIce = true;
-        probabilityOfRareIce = 6;
+        probabilityOfRareIce = 3;
         
         if (Files.exists(file)) {
             try {
                 Properties properties = new Properties();
                 properties.load(Files.newBufferedReader(file));
                 allowInsertingItemsToIce = properties.getProperty("allowInsertingItemsToIce", "true").equals("true");
-                probabilityOfRareIce = Integer.parseInt(properties.getProperty("probabilityOfRareIce", "6"));
+                probabilityOfRareIce = Integer.parseInt(properties.getProperty("probabilityOfRareIce", "3"));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -101,64 +97,41 @@ public class RareIce {
         
         bus.addListener(RareIce::onCommonSetup);
         MinecraftForge.EVENT_BUS.addListener(RareIce::rightClickBlock);
+        MinecraftForge.EVENT_BUS.addListener(RareIce::modifyBiome);
     }
     
     public static void onCommonSetup(FMLCommonSetupEvent event) {
         loadConfig(FMLPaths.CONFIGDIR.get().resolve("rare-ice.properties"));
-        ConfiguredFeature<?, ?> feature = RARE_ICE_FEATURE.get().withConfiguration(RareIceConfig.DEFAULT).withPlacement(Placement.field_242907_l.configure(new TopSolidRangeConfig(32, 128, 256))).func_242728_a().func_242731_b(probabilityOfRareIce);
-        Registry.register(WorldGenRegistries.field_243653_e, new ResourceLocation("rare-ice:rare-ice"), feature);
-        WorldGenRegistries.field_243657_i.stream().forEach(biome -> RareIce.handleBiome(biome, feature));
+        configuredFeature = RARE_ICE_FEATURE.get().configured(RareIceConfig.DEFAULT).decorated(FeatureDecorator.RANGE.configured(new RangeDecoratorConfiguration(UniformHeight.of(VerticalAnchor.aboveBottom(32), VerticalAnchor.belowTop(32))))).squared().count(probabilityOfRareIce);
+        Registry.register(BuiltinRegistries.CONFIGURED_FEATURE, new ResourceLocation("rare-ice:rare-ice"), configuredFeature);
+    }
+    
+    public static void modifyBiome(BiomeLoadingEvent event) {
+        event.getGeneration().addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, configuredFeature);
     }
     
     private static void rightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (!allowInsertingItemsToIce) return;
-        PlayerEntity player = event.getPlayer();
-        if (player.isSneaking()) return;
+        Player player = event.getPlayer();
+        if (player.isShiftKeyDown()) return;
         BlockPos pos = event.getPos();
-        World world = event.getWorld();
+        Level world = event.getWorld();
         BlockState state = world.getBlockState(pos);
         if ((state.getBlock() == Blocks.ICE || state.getBlock() == RareIce.RARE_ICE_BLOCK.get())) {
-            TileEntity blockEntity = world.getTileEntity(pos);
+            BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity == null) {
-                world.setBlockState(pos, RareIce.RARE_ICE_BLOCK.get().getDefaultState());
-                blockEntity = world.getTileEntity(pos);
+                world.setBlockAndUpdate(pos, RareIce.RARE_ICE_BLOCK.get().defaultBlockState());
+                blockEntity = world.getBlockEntity(pos);
             }
             if (blockEntity instanceof RareIceTileEntity) {
                 RareIceTileEntity rareIceBlockEntity = (RareIceTileEntity) blockEntity;
-                ItemStack itemStack = player.getHeldItem(event.getHand());
-                itemStack = player.abilities.isCreativeMode ? itemStack.copy() : itemStack;
-                ActionResultType type = rareIceBlockEntity.addItem(world, itemStack, player, event.getSide().isServer());
-                if (type != ActionResultType.PASS)
+                ItemStack itemStack = player.getItemInHand(event.getHand());
+                itemStack = player.getAbilities().instabuild ? itemStack.copy() : itemStack;
+                InteractionResult type = rareIceBlockEntity.addItem(world, itemStack, player, event.getSide().isServer());
+                if (type != InteractionResult.PASS)
                     event.setCanceled(true);
                 event.setCancellationResult(type);
             }
         }
-    }
-    
-    private static void handleBiome(Biome biome, ConfiguredFeature<?, ?> feature) {
-        registerFeature(
-                biome,
-                GenerationStage.Decoration.TOP_LAYER_MODIFICATION,
-                () -> feature
-        );
-    }
-    
-    public static void registerFeature(Biome biome, GenerationStage.Decoration generationStep, Supplier<ConfiguredFeature<?, ?>> configuredFeature) {
-        BiomeGenerationSettings generationSettings = biome.func_242440_e();
-        List<List<Supplier<ConfiguredFeature<?, ?>>>> features = generationSettings.field_242484_f;
-        if (features instanceof ImmutableList) {
-            features = generationSettings.field_242484_f = Lists.newArrayList(features);
-        }
-        
-        for (int i = features.size(); i <= generationStep.ordinal(); ++i) {
-            features.add(Lists.newArrayList());
-        }
-        
-        List<Supplier<ConfiguredFeature<?, ?>>> suppliers = features.get(generationStep.ordinal());
-        if (suppliers instanceof ImmutableList) {
-            features.set(generationStep.ordinal(), suppliers = Lists.newArrayList(suppliers));
-        }
-        
-        suppliers.add(configuredFeature);
     }
 }

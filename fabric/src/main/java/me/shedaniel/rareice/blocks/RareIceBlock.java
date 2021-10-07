@@ -1,10 +1,13 @@
 package me.shedaniel.rareice.blocks;
 
+import me.shedaniel.rareice.RareIce;
 import me.shedaniel.rareice.blocks.entities.RareIceBlockEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityTicker;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.player.PlayerEntity;
@@ -16,6 +19,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Random;
 
@@ -24,9 +28,20 @@ public class RareIceBlock extends BlockWithEntity {
         super(settings);
     }
     
+    @Nullable
     @Override
-    public BlockEntity createBlockEntity(BlockView view) {
-        return new RareIceBlockEntity();
+    public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+        return new RareIceBlockEntity(pos, state);
+    }
+    
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
+        if (world.isClient) {
+            return null;
+        } else {
+            return checkType(type, RareIce.RARE_ICE_BLOCK_ENTITY_TYPE, RareIceBlockEntity::tick);
+        }
     }
     
     @SuppressWarnings("deprecation")
