@@ -1,13 +1,13 @@
 package me.shedaniel.rareice.forge.loot;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.realmsclient.util.Pair;
 import net.minecraft.block.Block;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.WeightedRandom;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -16,7 +16,28 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class LootGenerator {
-    private static final List<Pair<Pair<Integer, Integer>, List<Entry>>> LOOT = new ArrayList<>();
+    private static class LootPair {
+        private final LootChance chance;
+        private final List<Entry> entries;
+        
+        private LootPair(LootChance chance, List<Entry> entries) {
+            this.chance = chance;
+            this.entries = entries;
+        }
+    }
+    
+    private static class LootChance {
+        private final int lowerBound;
+        @Nullable
+        private final Integer upperBound;
+        
+        private LootChance(int lowerBound, @Nullable Integer upperBound) {
+            this.lowerBound = lowerBound;
+            this.upperBound = upperBound;
+        }
+    }
+    
+    private static final List<LootPair> LOOT = new ArrayList<>();
     
     static {
         register(1, 2, builder -> {
@@ -50,15 +71,16 @@ public class LootGenerator {
         List<Entry> items = new ArrayList<>();
         Builder builder = new Builder(items);
         builderConsumer.accept(builder);
-        LOOT.add(Pair.of(Pair.of(min, max == min ? null : max), items));
+        LOOT.add(new LootPair(new LootChance(min, max == min ? null : max), items));
     }
     
     public static List<ItemStack> generate(Random random) {
         ImmutableList.Builder<ItemStack> builder = ImmutableList.builder();
-        for (Pair<Pair<Integer, Integer>, List<Entry>> pair : LOOT) {
-            int count = pair.first().first() + (pair.first().second() != null ? random.nextInt(pair.first().second() - pair.first().first()) : 0);
+        for (LootPair lootPair : LOOT) {
+            LootChance chance = lootPair.chance;
+            int count = chance.lowerBound + (chance.upperBound != null ? random.nextInt(chance.upperBound - chance.lowerBound) : 0);
             for (int i = 0; i < count; i++) {
-                Entry entry = WeightedRandom.getRandomItem(random, pair.second());
+                Entry entry = WeightedRandom.getRandomItem(random, lootPair.entries);
                 builder.add(entry.getStack(random));
             }
         }
