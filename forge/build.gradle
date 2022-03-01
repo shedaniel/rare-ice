@@ -13,7 +13,7 @@ apply plugin: "net.minecraftforge.gradle"
 apply plugin: "eclipse"
 
 minecraft {
-    mappings(channel: "official", version: "1.17.1")
+    mappings(channel: "official", version: rootProject.forge_minecraft_version)
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     runs {
         client {

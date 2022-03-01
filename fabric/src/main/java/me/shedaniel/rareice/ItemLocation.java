@@ -1,9 +1,9 @@
 package me.shedaniel.rareice;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.Vec3;
 
-public class ItemLocation extends Vec3d {
+public class ItemLocation extends Vec3 {
     public final double yaw;
     public final double pitch;
     

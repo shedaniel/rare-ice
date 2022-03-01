@@ -2,7 +2,7 @@ package me.shedaniel.rareice.forge.world.gen.feature;
 
 import com.mojang.serialization.Codec;
 import me.shedaniel.rareice.forge.RareIce;
-import me.shedaniel.rareice.forge.blocks.entities.RareIceTileEntity;
+import me.shedaniel.rareice.forge.blocks.entities.RareIceBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.WorldGenLevel;
@@ -115,8 +115,8 @@ public class RareIceFeature extends Feature<RareIceConfig> {
                                             if (config.predicate.test(world.getBlockState(mutable))) {
                                                 world.setBlock(mutable, RareIce.RARE_ICE_BLOCK.get().defaultBlockState(), 2);
                                                 BlockEntity entity = world.getBlockEntity(mutable);
-                                                if (entity instanceof RareIceTileEntity) {
-                                                    ((RareIceTileEntity) entity).addLootTable(world.getLevel());
+                                                if (entity instanceof RareIceBlockEntity) {
+                                                    ((RareIceBlockEntity) entity).addLootTable(world.getLevel());
                                                 }
                                                 ++j;
                                             }

@@ -2,14 +2,13 @@ package me.shedaniel.rareice.world.gen.feature;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.predicate.block.BlockPredicate;
-import net.minecraft.world.gen.feature.FeatureConfig;
-
 import java.util.function.Predicate;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.predicate.BlockPredicate;
+import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 
-public class RareIceConfig implements FeatureConfig {
+public class RareIceConfig implements FeatureConfiguration {
     public static final RareIceConfig DEFAULT = new RareIceConfig(20);
     public static final Codec<RareIceConfig> CODEC = RecordCodecBuilder.create(instance -> {
         return instance.group(

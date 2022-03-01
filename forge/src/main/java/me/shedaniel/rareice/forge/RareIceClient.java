@@ -1,6 +1,6 @@
 package me.shedaniel.rareice.forge;
 
-import me.shedaniel.rareice.forge.blocks.entities.RareIceTileEntityRenderer;
+import me.shedaniel.rareice.forge.blocks.entities.RareIceBlockEntityRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.level.block.Block;
@@ -27,6 +27,6 @@ public class RareIceClient {
     
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(RareIce.RARE_ICE_TILE_ENTITY_TYPE.get(), RareIceTileEntityRenderer::new);
+        event.registerBlockEntityRenderer(RareIce.RARE_ICE_TILE_ENTITY_TYPE.get(), RareIceBlockEntityRenderer::new);
     }
 }

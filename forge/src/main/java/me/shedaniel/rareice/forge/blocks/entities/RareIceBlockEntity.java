@@ -6,7 +6,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -25,12 +26,13 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class RareIceTileEntity extends BlockEntity implements Clearable {
+public class RareIceBlockEntity extends BlockEntity implements Clearable {
     private static final Random RANDOM = new Random();
     private static final ResourceLocation LOOT_TABLE = new ResourceLocation("rare-ice:chests/rare_ice");
     private final NonNullList<ItemStack> itemsContained;
@@ -38,7 +40,7 @@ public class RareIceTileEntity extends BlockEntity implements Clearable {
     private boolean setup = false;
     private int delay = 0;
     
-    public RareIceTileEntity(BlockPos pos, BlockState state) {
+    public RareIceBlockEntity(BlockPos pos, BlockState state) {
         super(RareIce.RARE_ICE_TILE_ENTITY_TYPE.get(), pos, state);
         this.itemsContained = NonNullList.create();
         this.itemsLocations = new ArrayList<>();
@@ -58,63 +60,65 @@ public class RareIceTileEntity extends BlockEntity implements Clearable {
         return itemsLocations;
     }
     
+    @Nullable
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+    
+    @Override
+    public CompoundTag getUpdateTag() {
+        return this.saveWithoutMetadata();
+    }
+    
     @Override
     public void load(CompoundTag tag) {
-        loadInitialChunkData(tag);
         this.delay = tag.getInt("RevertDelay");
+        
+        this.itemsContained.clear();
+        this.itemsLocations.clear();
+        ListTag itemsTag = tag.getList("Items", 10);
+        for (int i = 0; i < itemsTag.size(); ++i) {
+            CompoundTag compoundTag = itemsTag.getCompound(i);
+            itemsContained.add(ItemStack.of(compoundTag));
+        }
+        ListTag itemLocationsTag = tag.getList("ItemLocations", 10);
+        for (int i = 0; i < itemLocationsTag.size(); ++i) {
+            CompoundTag compoundTag = itemLocationsTag.getCompound(i);
+            itemsLocations.add(ItemLocation.fromTag(compoundTag));
+        }
     }
     
     @Override
-    public CompoundTag save(CompoundTag tag) {
-        saveInitialChunkData(tag);
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
         tag.putInt("RevertDelay", delay);
-        return tag;
-    }
-    
-    private CompoundTag saveInitialChunkData(CompoundTag tag) {
-        super.save(tag);
+        
         ListTag itemsTag = new ListTag();
         ListTag itemLocationsTag = new ListTag();
         for (int i = 0; i < itemsLocations.size(); ++i) {
             ItemLocation itemLocation = itemsLocations.get(i);
             ItemStack stack = itemsContained.get(i);
             if (!stack.isEmpty()) {
-                CompoundTag CompoundNBT = new CompoundTag();
-                stack.save(CompoundNBT);
-                itemsTag.add(CompoundNBT);
+                CompoundTag compoundTag = new CompoundTag();
+                stack.save(compoundTag);
+                itemsTag.add(compoundTag);
             }
             if (!stack.isEmpty()) {
-                CompoundTag CompoundNBT = new CompoundTag();
-                itemLocation.toTag(CompoundNBT);
-                itemLocationsTag.add(CompoundNBT);
+                CompoundTag compoundTag = new CompoundTag();
+                itemLocation.toTag(compoundTag);
+                itemLocationsTag.add(compoundTag);
             }
         }
         tag.put("Items", itemsTag);
         tag.put("ItemLocations", itemLocationsTag);
-        return tag;
-    }
-    
-    private void loadInitialChunkData(CompoundTag tag) {
-        super.load(tag);
-        this.itemsContained.clear();
-        this.itemsLocations.clear();
-        ListTag itemsTag = tag.getList("Items", 10);
-        for (int i = 0; i < itemsTag.size(); ++i) {
-            CompoundTag CompoundNBT = itemsTag.getCompound(i);
-            itemsContained.add(ItemStack.of(CompoundNBT));
-        }
-        ListTag itemLocationsTag = tag.getList("ItemLocations", 10);
-        for (int i = 0; i < itemLocationsTag.size(); ++i) {
-            CompoundTag CompoundNBT = itemLocationsTag.getCompound(i);
-            itemsLocations.add(ItemLocation.fromTag(CompoundNBT));
-        }
     }
     
     public void addLootTable(Level world) {
         setup = true;
     }
     
-    public static void tick(Level world, BlockPos pos, BlockState blockState, RareIceTileEntity blockEntity) {
+    public static void tick(Level world, BlockPos pos, BlockState blockState, RareIceBlockEntity blockEntity) {
         if (blockEntity.setup) {
             blockEntity.setup = false;
             blockEntity.delay = 0;
@@ -168,25 +172,5 @@ public class RareIceTileEntity extends BlockEntity implements Clearable {
     private void updateListeners() {
         this.setChanged();
         this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
-    }
-    
-    @Override
-    public ClientboundBlockEntityDataPacket getUpdatePacket() {
-        return new ClientboundBlockEntityDataPacket(getBlockPos(), 1, getUpdateTag());
-    }
-    
-    @Override
-    public CompoundTag getUpdateTag() {
-        return saveInitialChunkData(new CompoundTag());
-    }
-    
-    @Override
-    public void handleUpdateTag(CompoundTag tag) {
-        loadInitialChunkData(tag);
-    }
-    
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        handleUpdateTag(packet.getTag());
     }
 }

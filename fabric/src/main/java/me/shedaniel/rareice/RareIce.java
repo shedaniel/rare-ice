@@ -11,25 +11,26 @@ import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.tool.attribute.v1.FabricToolTags;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.BuiltinRegistries;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.world.gen.GenerationStep;
-import net.minecraft.world.gen.YOffset;
-import net.minecraft.world.gen.decorator.Decorator;
-import net.minecraft.world.gen.decorator.RangeDecoratorConfig;
-import net.minecraft.world.gen.feature.Feature;
-import net.minecraft.world.gen.heightprovider.UniformHeightProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.data.BuiltinRegistries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.levelgen.VerticalAnchor;
+import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.placement.CountPlacement;
+import net.minecraft.world.level.levelgen.placement.HeightRangePlacement;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,7 +39,7 @@ import java.util.Properties;
 
 public class RareIce implements ModInitializer {
     
-    public static final Block RARE_ICE_BLOCK = new RareIceBlock(FabricBlockSettings.copyOf(Blocks.ICE).allowsSpawning((state, world, pos, type) -> type == EntityType.POLAR_BEAR).breakByTool(FabricToolTags.PICKAXES));
+    public static final Block RARE_ICE_BLOCK = new RareIceBlock(FabricBlockSettings.copyOf(Blocks.ICE).isValidSpawn((state, world, pos, type) -> type == EntityType.POLAR_BEAR));
     public static final BlockEntityType<RareIceBlockEntity> RARE_ICE_BLOCK_ENTITY_TYPE = FabricBlockEntityTypeBuilder.create(RareIceBlockEntity::new, RARE_ICE_BLOCK).build(null);
     public static final Feature<RareIceConfig> RARE_ICE_FEATURE = new RareIceFeature(RareIceConfig.CODEC);
     
@@ -78,32 +79,35 @@ public class RareIce implements ModInitializer {
     @Override
     public void onInitialize() {
         loadConfig(FabricLoader.getInstance().getConfigDir().resolve("rare-ice.properties"));
-        Registry.register(Registry.FEATURE, new Identifier("rare-ice", "rare_ice"), RARE_ICE_FEATURE);
-        Registry.register(Registry.BLOCK_ENTITY_TYPE, new Identifier("rare-ice", "rare_ice"), RARE_ICE_BLOCK_ENTITY_TYPE);
-        Registry.register(Registry.BLOCK, new Identifier("rare-ice", "rare_ice"), RARE_ICE_BLOCK);
+        Registry.register(Registry.FEATURE, new ResourceLocation("rare-ice", "rare_ice"), RARE_ICE_FEATURE);
+        Registry.register(Registry.BLOCK_ENTITY_TYPE, new ResourceLocation("rare-ice", "rare_ice"), RARE_ICE_BLOCK_ENTITY_TYPE);
+        Registry.register(Registry.BLOCK, new ResourceLocation("rare-ice", "rare_ice"), RARE_ICE_BLOCK);
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
-            if (!allowInsertingItemsToIce) return ActionResult.PASS;
+            if (!allowInsertingItemsToIce) return InteractionResult.PASS;
             BlockPos pos = hitResult.getBlockPos();
             BlockState state = world.getBlockState(pos);
-            if (player == null || player.isSneaking())
-                return ActionResult.PASS;
+            if (player == null || player.isShiftKeyDown())
+                return InteractionResult.PASS;
             if ((state.getBlock() == Blocks.ICE || state.getBlock() == RareIce.RARE_ICE_BLOCK)) {
                 BlockEntity blockEntity = world.getBlockEntity(pos);
                 if (blockEntity == null) {
-                    world.setBlockState(pos, RareIce.RARE_ICE_BLOCK.getDefaultState());
+                    world.setBlockAndUpdate(pos, RareIce.RARE_ICE_BLOCK.defaultBlockState());
                     blockEntity = world.getBlockEntity(pos);
                 }
                 if (blockEntity instanceof RareIceBlockEntity) {
                     RareIceBlockEntity rareIceBlockEntity = (RareIceBlockEntity) blockEntity;
-                    ItemStack itemStack = player.getStackInHand(hand);
-                    itemStack = player.getAbilities().creativeMode ? itemStack.copy() : itemStack;
-                    return rareIceBlockEntity.addItem(world, itemStack, player, !world.isClient());
+                    ItemStack itemStack = player.getItemInHand(hand);
+                    itemStack = player.getAbilities().instabuild ? itemStack.copy() : itemStack;
+                    return rareIceBlockEntity.addItem(world, itemStack, player, !world.isClientSide());
                 }
             }
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         });
-        Registry.register(BuiltinRegistries.CONFIGURED_FEATURE, new Identifier("rare-ice", "rare_ice"),
-                RARE_ICE_FEATURE.configure(RareIceConfig.DEFAULT).decorate(Decorator.RANGE.configure(new RangeDecoratorConfig(UniformHeightProvider.create(YOffset.aboveBottom(32), YOffset.belowTop(32))))).spreadHorizontally().repeat(probabilityOfRareIce));
-        BiomeModifications.addFeature(ctx -> ctx.getBiome().getTemperature() < 0.15F, GenerationStep.Feature.UNDERGROUND_ORES, RegistryKey.of(Registry.CONFIGURED_FEATURE_KEY, new Identifier("rare-ice", "rare_ice")));
+        ConfiguredFeature<?, ?> configuredFeature = RARE_ICE_FEATURE.configured(RareIceConfig.DEFAULT);
+        PlacedFeature placedFeature = configuredFeature.placed(CountPlacement.of(probabilityOfRareIce),
+                HeightRangePlacement.uniform(VerticalAnchor.aboveBottom(32), VerticalAnchor.belowTop(32)));
+        Registry.register(BuiltinRegistries.CONFIGURED_FEATURE, new ResourceLocation("rare-ice", "rare_ice"), configuredFeature);
+        Registry.register(BuiltinRegistries.PLACED_FEATURE, new ResourceLocation("rare-ice", "rare_ice"), placedFeature);
+        BiomeModifications.addFeature(ctx -> ctx.getBiome().getBaseTemperature() < 0.15F, GenerationStep.Decoration.UNDERGROUND_ORES, ResourceKey.create(Registry.PLACED_FEATURE_REGISTRY, new ResourceLocation("rare-ice", "rare_ice")));
     }
 }

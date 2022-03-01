@@ -4,76 +4,80 @@ import me.shedaniel.rareice.RareIce;
 import me.shedaniel.rareice.blocks.entities.RareIceBlockEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ItemScatterer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.LightType;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Random;
 
-public class RareIceBlock extends BlockWithEntity {
-    public RareIceBlock(Settings settings) {
+public class RareIceBlock extends BaseEntityBlock {
+    public RareIceBlock(Properties settings) {
         super(settings);
     }
     
     @Nullable
     @Override
-    public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new RareIceBlockEntity(pos, state);
     }
     
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        if (world.isClient) {
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
+        if (world.isClientSide) {
             return null;
         } else {
-            return checkType(type, RareIce.RARE_ICE_BLOCK_ENTITY_TYPE, RareIceBlockEntity::tick);
+            return createTickerHelper(type, RareIce.RARE_ICE_BLOCK_ENTITY_TYPE, RareIceBlockEntity::tick);
         }
     }
     
     @SuppressWarnings("deprecation")
     @Deprecated
     @Override
-    public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moved) {
         if (state.getBlock() != newState.getBlock()) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof RareIceBlockEntity) {
-                ItemScatterer.spawn(world, pos, ((RareIceBlockEntity) blockEntity).getItemsContained());
+                Containers.dropContents(world, pos, ((RareIceBlockEntity) blockEntity).getItemsContained());
             }
-            super.onStateReplaced(state, world, pos, newState, moved);
+            super.onRemove(state, world, pos, newState, moved);
         }
     }
     
     @Environment(EnvType.CLIENT)
     @SuppressWarnings("deprecation")
     @Deprecated
-    public boolean isSideInvisible(BlockState state, BlockState neighbor, Direction facing) {
-        return neighbor.getBlock() == this || neighbor.getBlock() == Blocks.ICE || super.isSideInvisible(state, neighbor, facing);
+    public boolean skipRendering(BlockState state, BlockState neighbor, Direction facing) {
+        return neighbor.getBlock() == this || neighbor.getBlock() == Blocks.ICE || super.skipRendering(state, neighbor, facing);
     }
     
     @Override
-    public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, BlockEntity blockEntity, ItemStack stack) {
-        super.afterBreak(world, player, pos, state, blockEntity, stack);
-        if (EnchantmentHelper.getLevel(Enchantments.SILK_TOUCH, stack) == 0) {
-            if (world.getDimension().isUltrawarm()) {
+    public void playerDestroy(Level world, Player player, BlockPos pos, BlockState state, BlockEntity blockEntity, ItemStack stack) {
+        super.playerDestroy(world, player, pos, state, blockEntity, stack);
+        if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, stack) == 0) {
+            if (world.dimensionType().ultraWarm()) {
                 world.removeBlock(pos, false);
             } else {
-                Material material = world.getBlockState(pos.down()).getMaterial();
-                if (material.blocksMovement() || material.isLiquid()) {
-                    world.setBlockState(pos, Blocks.WATER.getDefaultState());
+                Material material = world.getBlockState(pos.below()).getMaterial();
+                if (material.blocksMotion() || material.isLiquid()) {
+                    world.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
                 }
             }
         }
@@ -82,28 +86,28 @@ public class RareIceBlock extends BlockWithEntity {
     @SuppressWarnings("deprecation")
     @Deprecated
     @Override
-    public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-        if (world.getLightLevel(LightType.BLOCK, pos) > 11 - state.getOpacity(world, pos)) {
+    public void tick(BlockState state, ServerLevel world, BlockPos pos, Random random) {
+        if (world.getBrightness(LightLayer.BLOCK, pos) > 11 - state.getLightBlock(world, pos)) {
             this.melt(state, world, pos);
         }
     }
     
-    protected void melt(BlockState state, World world, BlockPos pos) {
-        if (world.getDimension().isUltrawarm()) {
+    protected void melt(BlockState state, Level world, BlockPos pos) {
+        if (world.dimensionType().ultraWarm()) {
             world.removeBlock(pos, false);
         } else {
-            world.setBlockState(pos, Blocks.WATER.getDefaultState());
-            world.updateNeighbor(pos, Blocks.WATER, pos);
+            world.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
+            world.neighborChanged(pos, Blocks.WATER, pos);
         }
     }
     
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
     }
     
     @Override
-    public ItemStack getPickStack(BlockView world, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(BlockGetter world, BlockPos pos, BlockState state) {
         return new ItemStack(Blocks.ICE);
     }
 }

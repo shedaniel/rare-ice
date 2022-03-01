@@ -16,15 +16,15 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
-public class RareIceTileEntityRenderer implements BlockEntityRenderer<RareIceTileEntity> {
-    public RareIceTileEntityRenderer(BlockEntityRendererProvider.Context context) {
+public class RareIceBlockEntityRenderer implements BlockEntityRenderer<RareIceBlockEntity> {
+    public RareIceBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
     
     @Override
-    public void render(RareIceTileEntity tileEntity, float tickDelta, PoseStack matrices, MultiBufferSource buffer, int light, int overlay) {
-        if (tileEntity.isRemoved()) return;
-        NonNullList<ItemStack> contained = tileEntity.getItemsContained();
-        List<ItemLocation> locations = tileEntity.getItemsLocations();
+    public void render(RareIceBlockEntity blockEntity, float tickDelta, PoseStack matrices, MultiBufferSource buffer, int light, int overlay) {
+        if (blockEntity.isRemoved()) return;
+        NonNullList<ItemStack> contained = blockEntity.getItemsContained();
+        List<ItemLocation> locations = blockEntity.getItemsLocations();
         for (int i = 0; i < contained.size(); i++) {
             ItemStack stack = contained.get(i);
             ItemLocation location = locations.get(i);

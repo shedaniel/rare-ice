@@ -1,46 +1,45 @@
 package me.shedaniel.rareice.blocks.entities;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Vector3f;
 import me.shedaniel.rareice.ItemLocation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
-import net.minecraft.client.render.model.json.ModelTransformation;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.util.math.Vector3f;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public class RareIceBlockEntityRenderer implements BlockEntityRenderer<RareIceBlockEntity> {
-    public RareIceBlockEntityRenderer(BlockEntityRendererFactory.Context dispatcher) {
+    public RareIceBlockEntityRenderer(BlockEntityRendererProvider.Context dispatcher) {
     }
     
     @Override
-    public void render(RareIceBlockEntity blockEntity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
+    public void render(RareIceBlockEntity blockEntity, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay) {
         if (blockEntity.isRemoved()) return;
-        DefaultedList<ItemStack> contained = blockEntity.getItemsContained();
+        NonNullList<ItemStack> contained = blockEntity.getItemsContained();
         List<ItemLocation> locations = blockEntity.getItemsLocations();
         for (int i = 0; i < contained.size(); i++) {
             ItemStack stack = contained.get(i);
             ItemLocation location = locations.get(i);
             if (!stack.isEmpty()) {
-                matrices.push();
+                matrices.pushPose();
                 matrices.translate(location.x, location.y, location.z);
                 double yawDegrees = location.yaw * 180.0;
                 if (yawDegrees < 0) yawDegrees += 360.0;
-                matrices.multiply(Vector3f.POSITIVE_Y.getDegreesQuaternion((float) yawDegrees));
+                matrices.mulPose(Vector3f.YP.rotationDegrees((float) yawDegrees));
                 double pitchDegrees = location.pitch * 180.0 - 90.0;
                 if (pitchDegrees < 0) pitchDegrees += 360.0;
-                matrices.multiply(Vector3f.POSITIVE_X.getDegreesQuaternion((float) pitchDegrees));
+                matrices.mulPose(Vector3f.XP.rotationDegrees((float) pitchDegrees));
                 matrices.scale(0.8f, 0.8f, 0.8f);
-                MinecraftClient.getInstance().getItemRenderer().renderItem(stack, ModelTransformation.Mode.FIXED, light, overlay, matrices, vertexConsumers, 0);
-                matrices.pop();
+                Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemTransforms.TransformType.FIXED, light, overlay, matrices, vertexConsumers, 0);
+                matrices.popPose();
             }
         }
     }

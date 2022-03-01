@@ -1,18 +1,17 @@
 plugins {
-    id("fabric-loom") version "0.10-SNAPSHOT"
+    id("fabric-loom") version "0.11-SNAPSHOT"
 }
 
-minecraft {
+loom {
 }
 
 repositories {
-    jcenter()
     maven { url "https://maven.shedaniel.me" }
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${rootProject.fabric_minecraft_version}"
-    mappings "me.shedaniel:legacy-yarn:${rootProject.yarn_build}:v2"
+    mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
     modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"

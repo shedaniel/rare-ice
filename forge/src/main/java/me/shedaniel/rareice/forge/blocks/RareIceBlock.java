@@ -1,7 +1,7 @@
 package me.shedaniel.rareice.forge.blocks;
 
 import me.shedaniel.rareice.forge.RareIce;
-import me.shedaniel.rareice.forge.blocks.entities.RareIceTileEntity;
+import me.shedaniel.rareice.forge.blocks.entities.RareIceBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -37,7 +37,7 @@ public class RareIceBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new RareIceTileEntity(pos, state);
+        return new RareIceBlockEntity(pos, state);
     }
     
     @Nullable
@@ -46,7 +46,7 @@ public class RareIceBlock extends BaseEntityBlock {
         if (world.isClientSide()) {
             return null;
         } else {
-            return createTickerHelper(type, RareIce.RARE_ICE_TILE_ENTITY_TYPE.get(), RareIceTileEntity::tick);
+            return createTickerHelper(type, RareIce.RARE_ICE_TILE_ENTITY_TYPE.get(), RareIceBlockEntity::tick);
         }
     }
     
@@ -56,8 +56,8 @@ public class RareIceBlock extends BaseEntityBlock {
     public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moved) {
         if (state.getBlock() != newState.getBlock()) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof RareIceTileEntity) {
-                Containers.dropContents(world, pos, ((RareIceTileEntity) blockEntity).getItemsContained());
+            if (blockEntity instanceof RareIceBlockEntity) {
+                Containers.dropContents(world, pos, ((RareIceBlockEntity) blockEntity).getItemsContained());
             }
             super.onRemove(state, world, pos, newState, moved);
         }
@@ -110,7 +110,7 @@ public class RareIceBlock extends BaseEntityBlock {
     }
     
     @Override
-    public ItemStack getPickBlock(BlockState state, HitResult target, BlockGetter world, BlockPos pos, Player player) {
+    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter world, BlockPos pos, Player player) {
         return new ItemStack(Blocks.ICE);
     }
 }

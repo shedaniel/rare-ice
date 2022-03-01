@@ -1,7 +1,7 @@
 package me.shedaniel.rareice.forge;
 
 import me.shedaniel.rareice.forge.blocks.RareIceBlock;
-import me.shedaniel.rareice.forge.blocks.entities.RareIceTileEntity;
+import me.shedaniel.rareice.forge.blocks.entities.RareIceBlockEntity;
 import me.shedaniel.rareice.forge.world.gen.feature.RareIceConfig;
 import me.shedaniel.rareice.forge.world.gen.feature.RareIceFeature;
 import net.minecraft.core.BlockPos;
@@ -23,9 +23,9 @@ import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.configurations.RangeDecoratorConfiguration;
-import net.minecraft.world.level.levelgen.heightproviders.UniformHeight;
-import net.minecraft.world.level.levelgen.placement.FeatureDecorator;
+import net.minecraft.world.level.levelgen.placement.CountPlacement;
+import net.minecraft.world.level.levelgen.placement.HeightRangePlacement;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BiomeLoadingEvent;
@@ -34,9 +34,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.fmllegacy.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,10 +52,11 @@ public class RareIce {
     
     public static final RegistryObject<Block> RARE_ICE_BLOCK = BLOCK_REGISTRY.register("rare_ice", () ->
             new RareIceBlock(BlockBehaviour.Properties.copy(Blocks.ICE).isValidSpawn((state, world, pos, type) -> type == EntityType.POLAR_BEAR)));
-    public static final RegistryObject<BlockEntityType<RareIceTileEntity>> RARE_ICE_TILE_ENTITY_TYPE = TILE_ENTITY_REGISTRY.register("rare_ice", () ->
-            BlockEntityType.Builder.of(RareIceTileEntity::new, RARE_ICE_BLOCK.get()).build(null));
+    public static final RegistryObject<BlockEntityType<RareIceBlockEntity>> RARE_ICE_TILE_ENTITY_TYPE = TILE_ENTITY_REGISTRY.register("rare_ice", () ->
+            BlockEntityType.Builder.of(RareIceBlockEntity::new, RARE_ICE_BLOCK.get()).build(null));
     public static final RegistryObject<Feature<RareIceConfig>> RARE_ICE_FEATURE = FEATURE_REGISTRY.register("rare_ice", () -> new RareIceFeature(RareIceConfig.CODEC));
     public static ConfiguredFeature<?, ?> configuredFeature;
+    public static PlacedFeature placedFeature;
     public static boolean allowInsertingItemsToIce = true;
     public static int probabilityOfRareIce = 3;
     
@@ -102,12 +103,15 @@ public class RareIce {
     
     public static void onCommonSetup(FMLCommonSetupEvent event) {
         loadConfig(FMLPaths.CONFIGDIR.get().resolve("rare-ice.properties"));
-        configuredFeature = RARE_ICE_FEATURE.get().configured(RareIceConfig.DEFAULT).decorated(FeatureDecorator.RANGE.configured(new RangeDecoratorConfiguration(UniformHeight.of(VerticalAnchor.aboveBottom(32), VerticalAnchor.belowTop(32))))).squared().count(probabilityOfRareIce);
+        configuredFeature = RARE_ICE_FEATURE.get().configured(RareIceConfig.DEFAULT);
+        placedFeature = configuredFeature.placed(CountPlacement.of(probabilityOfRareIce),
+                HeightRangePlacement.uniform(VerticalAnchor.aboveBottom(32), VerticalAnchor.belowTop(32)));
         Registry.register(BuiltinRegistries.CONFIGURED_FEATURE, new ResourceLocation("rare-ice:rare-ice"), configuredFeature);
+        Registry.register(BuiltinRegistries.PLACED_FEATURE, new ResourceLocation("rare-ice:rare-ice"), placedFeature);
     }
     
     public static void modifyBiome(BiomeLoadingEvent event) {
-        event.getGeneration().addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, configuredFeature);
+        event.getGeneration().addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, placedFeature);
     }
     
     private static void rightClickBlock(PlayerInteractEvent.RightClickBlock event) {
@@ -123,8 +127,8 @@ public class RareIce {
                 world.setBlockAndUpdate(pos, RareIce.RARE_ICE_BLOCK.get().defaultBlockState());
                 blockEntity = world.getBlockEntity(pos);
             }
-            if (blockEntity instanceof RareIceTileEntity) {
-                RareIceTileEntity rareIceBlockEntity = (RareIceTileEntity) blockEntity;
+            if (blockEntity instanceof RareIceBlockEntity) {
+                RareIceBlockEntity rareIceBlockEntity = (RareIceBlockEntity) blockEntity;
                 ItemStack itemStack = player.getItemInHand(event.getHand());
                 itemStack = player.getAbilities().instabuild ? itemStack.copy() : itemStack;
                 InteractionResult type = rareIceBlockEntity.addItem(world, itemStack, player, event.getSide().isServer());
