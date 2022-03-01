@@ -9,12 +9,12 @@ import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
-import net.fabricmc.fabric.api.tool.attribute.v1.FabricToolTags;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
-import net.minecraft.data.BuiltinRegistries;
-import net.minecraft.resources.ResourceKey;
+import net.minecraft.data.worldgen.features.FeatureUtils;
+import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -103,11 +103,10 @@ public class RareIce implements ModInitializer {
             }
             return InteractionResult.PASS;
         });
-        ConfiguredFeature<?, ?> configuredFeature = RARE_ICE_FEATURE.configured(RareIceConfig.DEFAULT);
-        PlacedFeature placedFeature = configuredFeature.placed(CountPlacement.of(probabilityOfRareIce),
+        Holder<ConfiguredFeature<RareIceConfig, ?>> configuredFeature = FeatureUtils.register("rare-ice:rare_ice", RARE_ICE_FEATURE, RareIceConfig.DEFAULT);
+        Holder<PlacedFeature> placedFeature = PlacementUtils.register("rare-ice:rare_ice", configuredFeature, CountPlacement.of(probabilityOfRareIce),
                 HeightRangePlacement.uniform(VerticalAnchor.aboveBottom(32), VerticalAnchor.belowTop(32)));
-        Registry.register(BuiltinRegistries.CONFIGURED_FEATURE, new ResourceLocation("rare-ice", "rare_ice"), configuredFeature);
-        Registry.register(BuiltinRegistries.PLACED_FEATURE, new ResourceLocation("rare-ice", "rare_ice"), placedFeature);
-        BiomeModifications.addFeature(ctx -> ctx.getBiome().getBaseTemperature() < 0.15F, GenerationStep.Decoration.UNDERGROUND_ORES, ResourceKey.create(Registry.PLACED_FEATURE_REGISTRY, new ResourceLocation("rare-ice", "rare_ice")));
+        BiomeModifications.addFeature(ctx -> ctx.getBiome().getBaseTemperature() < 0.15F, GenerationStep.Decoration.UNDERGROUND_ORES,
+                placedFeature.unwrapKey().orElseThrow(IllegalStateException::new));
     }
 }
