@@ -5,9 +5,9 @@ import me.shedaniel.rareice.forge.blocks.entities.RareIceBlockEntity;
 import me.shedaniel.rareice.forge.world.gen.feature.RareIceConfig;
 import me.shedaniel.rareice.forge.world.gen.feature.RareIceFeature;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
-import net.minecraft.data.BuiltinRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.Holder;
+import net.minecraft.data.worldgen.features.FeatureUtils;
+import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
@@ -55,8 +55,8 @@ public class RareIce {
     public static final RegistryObject<BlockEntityType<RareIceBlockEntity>> RARE_ICE_TILE_ENTITY_TYPE = TILE_ENTITY_REGISTRY.register("rare_ice", () ->
             BlockEntityType.Builder.of(RareIceBlockEntity::new, RARE_ICE_BLOCK.get()).build(null));
     public static final RegistryObject<Feature<RareIceConfig>> RARE_ICE_FEATURE = FEATURE_REGISTRY.register("rare_ice", () -> new RareIceFeature(RareIceConfig.CODEC));
-    public static ConfiguredFeature<?, ?> configuredFeature;
-    public static PlacedFeature placedFeature;
+    public static Holder<ConfiguredFeature<RareIceConfig, ?>> configuredFeature;
+    public static Holder<PlacedFeature> placedFeature;
     public static boolean allowInsertingItemsToIce = true;
     public static int probabilityOfRareIce = 3;
     
@@ -103,11 +103,9 @@ public class RareIce {
     
     public static void onCommonSetup(FMLCommonSetupEvent event) {
         loadConfig(FMLPaths.CONFIGDIR.get().resolve("rare-ice.properties"));
-        configuredFeature = RARE_ICE_FEATURE.get().configured(RareIceConfig.DEFAULT);
-        placedFeature = configuredFeature.placed(CountPlacement.of(probabilityOfRareIce),
+        configuredFeature = FeatureUtils.register("rare-ice:rare_ice", RARE_ICE_FEATURE.get(), RareIceConfig.DEFAULT);
+        placedFeature = PlacementUtils.register("rare-ice:rare_ice", configuredFeature, CountPlacement.of(probabilityOfRareIce),
                 HeightRangePlacement.uniform(VerticalAnchor.aboveBottom(32), VerticalAnchor.belowTop(32)));
-        Registry.register(BuiltinRegistries.CONFIGURED_FEATURE, new ResourceLocation("rare-ice:rare-ice"), configuredFeature);
-        Registry.register(BuiltinRegistries.PLACED_FEATURE, new ResourceLocation("rare-ice:rare-ice"), placedFeature);
     }
     
     public static void modifyBiome(BiomeLoadingEvent event) {

@@ -12,4 +12,4 @@ pluginManagement {
 rootProject.name = "rare-ice"
 
 include("fabric")
-//include("forge")
+include("forge")
