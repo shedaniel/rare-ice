@@ -2,6 +2,7 @@ var Opcodes = Java.type("org.objectweb.asm.Opcodes");
 var FieldNode = Java.type("org.objectweb.asm.tree.FieldNode");
 var InsnNode = Java.type("org.objectweb.asm.tree.InsnNode");
 var JumpInsnNode = Java.type("org.objectweb.asm.tree.JumpInsnNode");
+var TypeInsnNode = Java.type("org.objectweb.asm.tree.TypeInsnNode");
 var LabelNode = Java.type("org.objectweb.asm.tree.LabelNode");
 var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
 var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
@@ -12,7 +13,7 @@ function initializeCoreMod() {
         "smooth-scrolling-everywhere": {
             'target': {
                 'type': 'CLASS',
-                'name': 'net.minecraft.world.level.block'
+                'name': 'net.minecraft.world.level.block.HalfTransparentBlock'
             },
             'transformer': function (classNode) {
                 var isSideInvisible = ASMAPI.mapMethod("m_6104_");
@@ -26,8 +27,7 @@ function initializeCoreMod() {
                             if (instruction instanceof LabelNode) {
                                 instructions.insertBefore(instruction, new LabelNode());
                                 instructions.insertBefore(instruction, new VarInsnNode(Opcodes.ALOAD, 0));
-                                instructions.insertBefore(instruction, new VarInsnNode(Opcodes.ALOAD, 0));
-                                instructions.insertBefore(instruction, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/level/block/BreakableBlock", "self", "()Lnet/minecraft/world/level/block/Block;", false));
+                                instructions.insertBefore(instruction, new TypeInsnNode(Opcodes.CHECKCAST, "net/minecraft/world/level/block/Block"));
                                 instructions.insertBefore(instruction, new VarInsnNode(Opcodes.ALOAD, 2));
                                 instructions.insertBefore(instruction, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/shedaniel/rareice/forge/RareIceClient", "isSideInvisibleForIce", "(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/state/BlockState;)Z", false));
                                 instructions.insertBefore(instruction, new JumpInsnNode(Opcodes.IFEQ, instruction));
