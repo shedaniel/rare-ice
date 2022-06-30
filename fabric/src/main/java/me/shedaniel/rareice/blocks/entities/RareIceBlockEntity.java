@@ -14,6 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Clearable;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -31,10 +32,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class RareIceBlockEntity extends BlockEntity implements Clearable {
-    private static final Random RANDOM = new Random();
+    private static final RandomSource RANDOM = RandomSource.create();
     private static final ResourceLocation LOOT_TABLE = new ResourceLocation("rare-ice:chests/rare_ice");
     private final NonNullList<ItemStack> itemsContained;
     private final List<ItemLocation> itemsLocations;
@@ -158,7 +158,7 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable {
         if (getItemsContained().size() < 8 && itemStack.getCount() >= 1) {
             if (actuallyDoIt) {
                 getItemsContained().add(itemStack.split(1));
-                Random random = world.random;
+                RandomSource random = world.random;
                 if (random == null) random = RANDOM;
                 getItemsLocations().add(new ItemLocation(random.nextDouble() * .95 + .1, random.nextDouble() * .7 + .1, random.nextDouble() * .95 + .1));
                 updateListeners();

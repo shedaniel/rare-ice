@@ -19,7 +19,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -28,7 +27,6 @@ import net.minecraft.world.level.levelgen.placement.HeightRangePlacement;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.world.BiomeLoadingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -98,7 +96,6 @@ public class RareIce {
         
         bus.addListener(RareIce::onCommonSetup);
         MinecraftForge.EVENT_BUS.addListener(RareIce::rightClickBlock);
-        MinecraftForge.EVENT_BUS.addListener(RareIce::modifyBiome);
     }
     
     public static void onCommonSetup(FMLCommonSetupEvent event) {
@@ -106,10 +103,6 @@ public class RareIce {
         configuredFeature = FeatureUtils.register("rare-ice:rare_ice", RARE_ICE_FEATURE.get(), RareIceConfig.DEFAULT);
         placedFeature = PlacementUtils.register("rare-ice:rare_ice", configuredFeature, CountPlacement.of(probabilityOfRareIce),
                 HeightRangePlacement.uniform(VerticalAnchor.aboveBottom(32), VerticalAnchor.belowTop(32)));
-    }
-    
-    public static void modifyBiome(BiomeLoadingEvent event) {
-        event.getGeneration().addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, placedFeature);
     }
     
     private static void rightClickBlock(PlayerInteractEvent.RightClickBlock event) {

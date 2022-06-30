@@ -5,6 +5,7 @@ import me.shedaniel.rareice.forge.RareIce;
 import me.shedaniel.rareice.forge.blocks.entities.RareIceBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -20,7 +21,7 @@ public class RareIceFeature extends Feature<RareIceConfig> {
     
     @Override
     public boolean place(FeaturePlaceContext<RareIceConfig> ctx) {
-        Random random = ctx.random();
+        RandomSource random = ctx.random();
         WorldGenLevel level = ctx.level();
         RareIceConfig config = ctx.config();
         BlockPos pos = ctx.origin();
@@ -42,7 +43,7 @@ public class RareIceFeature extends Feature<RareIceConfig> {
         return this.generateVeinPart(level, random, config, d, e, h, j, l, m, n, o, p, q, r);
     }
     
-    protected boolean generateVeinPart(WorldGenLevel world, Random random, RareIceConfig config, double startX, double endX, double startZ, double endZ, double startY, double endY, int x, int y, int z, int size, int i) {
+    protected boolean generateVeinPart(WorldGenLevel world, RandomSource random, RareIceConfig config, double startX, double endX, double startZ, double endZ, double startY, double endY, int x, int y, int z, int size, int i) {
         int j = 0;
         BitSet bitSet = new BitSet(size * i * size);
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
