@@ -44,7 +44,7 @@ import java.util.Properties;
 @Mod("rare_ice")
 public class RareIce {
     
-    public static final DeferredRegister<BlockEntityType<?>> TILE_ENTITY_REGISTRY = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITIES, "rare-ice");
+    public static final DeferredRegister<BlockEntityType<?>> TILE_ENTITY_REGISTRY = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, "rare-ice");
     public static final DeferredRegister<Block> BLOCK_REGISTRY = DeferredRegister.create(ForgeRegistries.BLOCKS, "rare-ice");
     public static final DeferredRegister<Feature<?>> FEATURE_REGISTRY = DeferredRegister.create(ForgeRegistries.FEATURES, "rare-ice");
     
@@ -107,10 +107,10 @@ public class RareIce {
     
     private static void rightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (!allowInsertingItemsToIce) return;
-        Player player = event.getPlayer();
+        Player player = event.getEntity();
         if (player.isShiftKeyDown()) return;
         BlockPos pos = event.getPos();
-        Level world = event.getWorld();
+        Level world = event.getLevel();
         BlockState state = world.getBlockState(pos);
         if ((state.getBlock() == Blocks.ICE || state.getBlock() == RareIce.RARE_ICE_BLOCK.get())) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
