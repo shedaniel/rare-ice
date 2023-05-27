@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -38,7 +39,7 @@ public class RareIceBlockEntityRenderer implements BlockEntityRenderer<RareIceBl
                 if (pitchDegrees < 0) pitchDegrees += 360.0;
                 matrices.mulPose(Axis.XP.rotationDegrees((float) pitchDegrees));
                 matrices.scale(0.8f, 0.8f, 0.8f);
-                Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemTransforms.TransformType.FIXED, light, overlay, matrices, buffer, 0);
+                Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.FIXED, light, overlay, matrices, buffer, Minecraft.getInstance().level, 0);
                 matrices.popPose();
             }
         }
