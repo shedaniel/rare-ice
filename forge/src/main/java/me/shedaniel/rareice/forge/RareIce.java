@@ -3,11 +3,10 @@ package me.shedaniel.rareice.forge;
 import me.shedaniel.rareice.forge.blocks.RareIceBlock;
 import me.shedaniel.rareice.forge.blocks.entities.RareIceBlockEntity;
 import me.shedaniel.rareice.forge.world.gen.feature.RareIceConfig;
+import me.shedaniel.rareice.forge.world.gen.feature.RareIceCountPlacement;
 import me.shedaniel.rareice.forge.world.gen.feature.RareIceFeature;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.data.worldgen.features.FeatureUtils;
-import net.minecraft.data.worldgen.placement.PlacementUtils;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
@@ -19,12 +18,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.VerticalAnchor;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.placement.CountPlacement;
-import net.minecraft.world.level.levelgen.placement.HeightRangePlacement;
-import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+import net.minecraft.world.level.levelgen.placement.PlacementModifierType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -43,7 +38,7 @@ import java.util.Properties;
 
 @Mod("rare_ice")
 public class RareIce {
-    
+    public static final DeferredRegister<PlacementModifierType<?>> PLACEMENT_MODIFIERS = DeferredRegister.create(Registries.PLACEMENT_MODIFIER_TYPE, "rare-ice");
     public static final DeferredRegister<BlockEntityType<?>> TILE_ENTITY_REGISTRY = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, "rare-ice");
     public static final DeferredRegister<Block> BLOCK_REGISTRY = DeferredRegister.create(ForgeRegistries.BLOCKS, "rare-ice");
     public static final DeferredRegister<Feature<?>> FEATURE_REGISTRY = DeferredRegister.create(ForgeRegistries.FEATURES, "rare-ice");
@@ -53,8 +48,7 @@ public class RareIce {
     public static final RegistryObject<BlockEntityType<RareIceBlockEntity>> RARE_ICE_TILE_ENTITY_TYPE = TILE_ENTITY_REGISTRY.register("rare_ice", () ->
             BlockEntityType.Builder.of(RareIceBlockEntity::new, RARE_ICE_BLOCK.get()).build(null));
     public static final RegistryObject<Feature<RareIceConfig>> RARE_ICE_FEATURE = FEATURE_REGISTRY.register("rare_ice", () -> new RareIceFeature(RareIceConfig.CODEC));
-    public static Holder<ConfiguredFeature<RareIceConfig, ?>> configuredFeature;
-    public static Holder<PlacedFeature> placedFeature;
+    public static final RegistryObject<PlacementModifierType<RareIceCountPlacement>> COUNT_PLACEMENT = PLACEMENT_MODIFIERS.register("rare_ice_count", () -> () -> RareIceCountPlacement.CODEC);
     public static boolean allowInsertingItemsToIce = true;
     public static int probabilityOfRareIce = 3;
     
@@ -90,6 +84,7 @@ public class RareIce {
     
     public RareIce() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+        PLACEMENT_MODIFIERS.register(bus);
         BLOCK_REGISTRY.register(bus);
         TILE_ENTITY_REGISTRY.register(bus);
         FEATURE_REGISTRY.register(bus);
@@ -100,9 +95,6 @@ public class RareIce {
     
     public static void onCommonSetup(FMLCommonSetupEvent event) {
         loadConfig(FMLPaths.CONFIGDIR.get().resolve("rare-ice.properties"));
-        configuredFeature = FeatureUtils.register("rare-ice:rare_ice", RARE_ICE_FEATURE.get(), RareIceConfig.DEFAULT);
-        placedFeature = PlacementUtils.register("rare-ice:rare_ice", configuredFeature, CountPlacement.of(probabilityOfRareIce),
-                HeightRangePlacement.uniform(VerticalAnchor.aboveBottom(32), VerticalAnchor.belowTop(32)));
     }
     
     private static void rightClickBlock(PlayerInteractEvent.RightClickBlock event) {

@@ -1,0 +1,20 @@
+{
+  "feature": "rare-ice:rare_ice",
+  "placement": [
+    {
+      "type": "rare-ice:rare_ice_count"
+    },
+    {
+      "type": "minecraft:height_range",
+      "height": {
+        "type": "minecraft:uniform",
+        "max_inclusive": {
+          "below_top": 32
+        },
+        "min_inclusive": {
+          "above_bottom": 32
+        }
+      }
+    }
+  ]
+}

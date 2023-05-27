@@ -1,7 +1,7 @@
 package me.shedaniel.rareice.forge;
 
-import com.mojang.math.Vector3d;
 import net.minecraft.nbt.CompoundTag;
+import org.joml.Vector3d;
 
 public class ItemLocation extends Vector3d {
     public final double yaw;

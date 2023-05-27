@@ -3,6 +3,7 @@ package me.shedaniel.rareice;
 import me.shedaniel.rareice.blocks.RareIceBlock;
 import me.shedaniel.rareice.blocks.entities.RareIceBlockEntity;
 import me.shedaniel.rareice.world.gen.feature.RareIceConfig;
+import me.shedaniel.rareice.world.gen.feature.RareIceCountPlacement;
 import me.shedaniel.rareice.world.gen.feature.RareIceFeature;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
@@ -13,8 +14,11 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.features.FeatureUtils;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -31,6 +35,7 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.placement.CountPlacement;
 import net.minecraft.world.level.levelgen.placement.HeightRangePlacement;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+import net.minecraft.world.level.levelgen.placement.PlacementModifierType;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,6 +47,7 @@ public class RareIce implements ModInitializer {
     public static final Block RARE_ICE_BLOCK = new RareIceBlock(FabricBlockSettings.copyOf(Blocks.ICE).isValidSpawn((state, world, pos, type) -> type == EntityType.POLAR_BEAR));
     public static final BlockEntityType<RareIceBlockEntity> RARE_ICE_BLOCK_ENTITY_TYPE = FabricBlockEntityTypeBuilder.create(RareIceBlockEntity::new, RARE_ICE_BLOCK).build(null);
     public static final Feature<RareIceConfig> RARE_ICE_FEATURE = new RareIceFeature(RareIceConfig.CODEC);
+    public static final PlacementModifierType<RareIceCountPlacement> COUNT_PLACEMENT = () -> RareIceCountPlacement.CODEC;
     
     public static boolean allowInsertingItemsToIce = true;
     public static int probabilityOfRareIce = 3;
@@ -79,9 +85,10 @@ public class RareIce implements ModInitializer {
     @Override
     public void onInitialize() {
         loadConfig(FabricLoader.getInstance().getConfigDir().resolve("rare-ice.properties"));
-        Registry.register(Registry.FEATURE, new ResourceLocation("rare-ice", "rare_ice"), RARE_ICE_FEATURE);
-        Registry.register(Registry.BLOCK_ENTITY_TYPE, new ResourceLocation("rare-ice", "rare_ice"), RARE_ICE_BLOCK_ENTITY_TYPE);
-        Registry.register(Registry.BLOCK, new ResourceLocation("rare-ice", "rare_ice"), RARE_ICE_BLOCK);
+        Registry.register(BuiltInRegistries.PLACEMENT_MODIFIER_TYPE, new ResourceLocation("rare-ice", "rare_ice_count"), COUNT_PLACEMENT);
+        Registry.register(BuiltInRegistries.FEATURE, new ResourceLocation("rare-ice", "rare_ice"), RARE_ICE_FEATURE);
+        Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, new ResourceLocation("rare-ice", "rare_ice"), RARE_ICE_BLOCK_ENTITY_TYPE);
+        Registry.register(BuiltInRegistries.BLOCK, new ResourceLocation("rare-ice", "rare_ice"), RARE_ICE_BLOCK);
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
             if (!allowInsertingItemsToIce) return InteractionResult.PASS;
             BlockPos pos = hitResult.getBlockPos();
@@ -103,10 +110,7 @@ public class RareIce implements ModInitializer {
             }
             return InteractionResult.PASS;
         });
-        Holder<ConfiguredFeature<RareIceConfig, ?>> configuredFeature = FeatureUtils.register("rare-ice:rare_ice", RARE_ICE_FEATURE, RareIceConfig.DEFAULT);
-        Holder<PlacedFeature> placedFeature = PlacementUtils.register("rare-ice:rare_ice", configuredFeature, CountPlacement.of(probabilityOfRareIce),
-                HeightRangePlacement.uniform(VerticalAnchor.aboveBottom(32), VerticalAnchor.belowTop(32)));
         BiomeModifications.addFeature(ctx -> ctx.getBiome().getBaseTemperature() < 0.15F, GenerationStep.Decoration.UNDERGROUND_ORES,
-                placedFeature.unwrapKey().orElseThrow(IllegalStateException::new));
+                ResourceKey.create(Registries.PLACED_FEATURE, new ResourceLocation("rare-ice", "rare_ice")));
     }
 }

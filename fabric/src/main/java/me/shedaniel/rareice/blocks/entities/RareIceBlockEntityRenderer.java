@@ -1,7 +1,7 @@
 package me.shedaniel.rareice.blocks.entities;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Vector3f;
+import com.mojang.math.Axis;
 import me.shedaniel.rareice.ItemLocation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -33,10 +33,10 @@ public class RareIceBlockEntityRenderer implements BlockEntityRenderer<RareIceBl
                 matrices.translate(location.x, location.y, location.z);
                 double yawDegrees = location.yaw * 180.0;
                 if (yawDegrees < 0) yawDegrees += 360.0;
-                matrices.mulPose(Vector3f.YP.rotationDegrees((float) yawDegrees));
+                matrices.mulPose(Axis.YP.rotationDegrees((float) yawDegrees));
                 double pitchDegrees = location.pitch * 180.0 - 90.0;
                 if (pitchDegrees < 0) pitchDegrees += 360.0;
-                matrices.mulPose(Vector3f.XP.rotationDegrees((float) pitchDegrees));
+                matrices.mulPose(Axis.XP.rotationDegrees((float) pitchDegrees));
                 matrices.scale(0.8f, 0.8f, 0.8f);
                 Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemTransforms.TransformType.FIXED, light, overlay, matrices, vertexConsumers, 0);
                 matrices.popPose();
