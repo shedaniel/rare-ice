@@ -23,10 +23,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Random;
 
 public class RareIceBlock extends BaseEntityBlock {
     public RareIceBlock(Properties settings) {
@@ -76,8 +73,8 @@ public class RareIceBlock extends BaseEntityBlock {
             if (world.dimensionType().ultraWarm()) {
                 world.removeBlock(pos, false);
             } else {
-                Material material = world.getBlockState(pos.below()).getMaterial();
-                if (material.blocksMotion() || material.isLiquid()) {
+                BlockState blockState = world.getBlockState(pos.below());
+                if (blockState.blocksMotion() || blockState.liquid()) {
                     world.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
                 }
             }

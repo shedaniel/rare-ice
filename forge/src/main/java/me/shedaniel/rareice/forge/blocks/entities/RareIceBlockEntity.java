@@ -12,6 +12,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Clearable;
@@ -23,15 +24,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
-import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class RareIceBlockEntity extends BlockEntity implements Clearable {
     private static final RandomSource RANDOM = RandomSource.create();
@@ -123,8 +122,8 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable {
         if (blockEntity.setup) {
             blockEntity.setup = false;
             blockEntity.delay = 0;
-            LootTable lootTable = world.getServer().getLootTables().get(LOOT_TABLE);
-            LootContext.Builder builder = new LootContext.Builder((ServerLevel) world);
+            LootTable lootTable = world.getServer().getLootData().getLootTable(LOOT_TABLE);
+            LootParams.Builder builder = new LootParams.Builder((ServerLevel) world);
             List<ItemStack> drops = lootTable.getRandomItems(builder.create(LootContextParamSets.EMPTY));
             int size = Mth.clamp(world.random.nextInt(5) - (world.random.nextInt(1) + 2), 0, drops.size());
             if (drops.size() >= 1) {
@@ -151,8 +150,7 @@ public class RareIceBlockEntity extends BlockEntity implements Clearable {
     
     public InteractionResult addItem(Level world, ItemStack itemStack, Player nullablePlayer, boolean actuallyDoIt) {
         if (itemStack.getItem() instanceof BlockItem) {
-            Material material = ((BlockItem) itemStack.getItem()).getBlock().material;
-            if (material == Material.ICE || material == Material.ICE_SOLID)
+            if (((BlockItem) itemStack.getItem()).getBlock().builtInRegistryHolder().is(BlockTags.ICE))
                 return InteractionResult.PASS;
         }
         if (getItemsContained().size() < 8 && itemStack.getCount() >= 1) {
